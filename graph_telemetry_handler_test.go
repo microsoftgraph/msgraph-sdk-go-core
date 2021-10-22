@@ -5,6 +5,7 @@ import (
 	httptest "net/http/httptest"
 	testing "testing"
 
+	abs "github.com/microsoft/kiota/abstractions/go"
 	khttp "github.com/microsoft/kiota/http/go/nethttp"
 	assert "github.com/stretchr/testify/assert"
 )
@@ -13,7 +14,7 @@ type NoopMiddleware struct {
 	response *nethttp.Response
 }
 
-func (m *NoopMiddleware) Do(req *nethttp.Request) (*nethttp.Response, error) {
+func (m *NoopMiddleware) Do(req *nethttp.Request, options []abs.RequestOption) (*nethttp.Response, error) {
 	return m.response, nil
 }
 func (m *NoopMiddleware) GetNext() khttp.Middleware {
@@ -42,7 +43,7 @@ func TestItAddsHeaders(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	resp, err := handler.Do(req)
+	resp, err := handler.Do(req, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,7 +71,7 @@ func TestItAddsServiceLibInfo(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	resp, err := handler.Do(req)
+	resp, err := handler.Do(req, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -95,7 +96,7 @@ func TestItAddsServiceInfo(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	resp, err := handler.Do(req)
+	resp, err := handler.Do(req, nil)
 	if err != nil {
 		t.Error(err)
 	}

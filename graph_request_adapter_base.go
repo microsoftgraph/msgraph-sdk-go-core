@@ -59,8 +59,13 @@ func NewGraphRequestAdapterBaseWithParseNodeFactoryAndSerializationWriterFactory
 	if authenticationProvider == nil {
 		return nil, errors.New("authenticationProvider cannot be nil")
 	}
+	middlewares := GetDefaultMiddlewaresWithOptions(&clientOptions)
+	cErr := khttp.ChainMiddlewares(middlewares)
+	if cErr != nil {
+		return nil, cErr
+	}
 	if httpClient == nil {
-		defaultClient, err := khttp.NewNetHttpMiddlewareClientWithMiddlewares(GetDefaultMiddlewaresWithOptions(&clientOptions))
+		defaultClient, err := khttp.NewNetHttpMiddlewareClientWithMiddlewares(middlewares)
 		if err != nil {
 			return nil, err
 		}

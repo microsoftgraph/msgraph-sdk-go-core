@@ -20,6 +20,13 @@ func GetDefaultMiddlewaresWithOptions(options *GraphClientOptions) []khttp.Middl
 	resultMiddlewares := make([]khttp.Middleware, len(kiotaMiddlewares)+graphMiddlewaresLen)
 	copy(resultMiddlewares, graphMiddlewares)
 	copy(resultMiddlewares[graphMiddlewaresLen:], kiotaMiddlewares)
+	for i, v := range resultMiddlewares {
+		_, ok := v.(*khttp.ClientMiddleware)
+		if ok {
+			resultMiddlewares[i] = khttp.NewClientMiddleware(GetDefaultClient())
+			break
+		}
+	}
 	return resultMiddlewares
 }
 

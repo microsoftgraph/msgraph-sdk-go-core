@@ -48,6 +48,6 @@ func NewGraphTelemetryHandler(options *GraphClientOptions) *GraphTelemetryHandle
 		return nil
 	}
 	return &GraphTelemetryHandler{
-		CallbackHandler: *kmiddleware.NewTelemetryHandler(callback, nil),
+		CallbackHandler: *kmiddleware.NewCallbackHandler(callback, nil),
 	}
 }

@@ -21,13 +21,14 @@ type GraphTelemetryHandler struct {
 //   the new GraphTelemetryHandler.
 func NewGraphTelemetryHandler(options *GraphClientOptions) *GraphTelemetryHandler {
 	callback := func(req *nethttp.Request) error {
-		serviceVersionSuffix := ""
+		serviceVersionPrefix := ""
 		if options != nil && options.GraphServiceLibraryVersion != "" {
-			serviceVersionSuffix += ", graph-go"
+			serviceVersionPrefix += "graph-go"
 			if options.GraphServiceVersion != "" {
-				serviceVersionSuffix += "-" + options.GraphServiceVersion
+				serviceVersionPrefix += "-" + options.GraphServiceVersion
 			}
-			serviceVersionSuffix += "/" + options.GraphServiceLibraryVersion
+			serviceVersionPrefix += "/" + options.GraphServiceLibraryVersion
+			serviceVersionPrefix += ", "
 		}
 		featuresSuffix := ""
 		if runtime.GOOS != "" {
@@ -43,7 +44,7 @@ func NewGraphTelemetryHandler(options *GraphClientOptions) *GraphTelemetryHandle
 		if featuresSuffix != "" {
 			featuresSuffix = " (" + featuresSuffix[1:] + ")"
 		}
-		req.Header.Add("SdkVersion", "graph-go-core/"+CoreVersion+serviceVersionSuffix+featuresSuffix)
+		req.Header.Add("SdkVersion", serviceVersionPrefix+"graph-go-core/"+CoreVersion+featuresSuffix)
 		req.Header.Add("client-request-id", uuid.NewString())
 		return nil
 	}

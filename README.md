@@ -4,7 +4,8 @@
 
 Get started with the Microsoft Graph Core SDK for Go by integrating the [Microsoft Graph API](https://developer.microsoft.com/en-us/graph/get-started/go) into your Go application! You can also have a look at the [Go documentation](https://pkg.go.dev/github.com/microsoftgraph/msgraph-sdk-go-core/)
 
-> Note: Although you can use this library directly, we recommand you use the [v1](https://github.com/microsoftgraph/msgraph-sdk-go) or [beta](https://github.com/microsoftgraph/msgraph-sdk-go) library which rely on this library and additionally provide a fluent style Go API and models.
+> **Note:** Although you can use this library directly, we recommand you use the [v1](https://github.com/microsoftgraph/msgraph-sdk-go) or [beta](https://github.com/microsoftgraph/msgraph-sdk-go) library which rely on this library and additionally provide a fluent style Go API and models.
+> **Note:** the Microsoft Graph Go SDK is currently in Community Preview. During this period we're expecting breaking changes to happen to the SDK based on community's feedback. Checkout the [known limitations](https://github.com/microsoftgraph/msgraph-sdk-go-core/issues/1).
 
 ## Samples and usage guide
 
@@ -71,7 +72,7 @@ if err != nil {
 
 ## 3. Make requests against the service
 
-After you have a HttpClients that is authenticated, you can begin making calls against the service. The requests against the service look like our [REST API](https://docs.microsoft.com/graph/overview).
+After you have a GraphRequestAdapterBase that is authenticated, you can begin making calls against the service. The requests against the service look like our [REST API](https://docs.microsoft.com/graph/overview).
 
 ### 3.1 Get the user's details
 
@@ -107,6 +108,6 @@ The Microsoft Graph SDK is open for contribution. To contribute to this project,
 
 Copyright (c) Microsoft Corporation. All Rights Reserved. Licensed under the [MIT license](LICENSE).
 
-## 8. Third-party notices
+## 7. Third-party notices
 
 [Third-party notices](THIRD%20PARTY%20NOTICES)

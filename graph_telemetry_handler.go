@@ -6,12 +6,12 @@ import (
 	runtime "runtime"
 
 	uuid "github.com/google/uuid"
-	kmiddleware "github.com/microsoft/kiota/http/go/nethttp/middleware"
+	khttp "github.com/microsoft/kiota/http/go/nethttp"
 )
 
 // GraphTelemetryHandler is a middleware handler that adds telemetry headers to requests.
 type GraphTelemetryHandler struct {
-	kmiddleware.CallbackHandler
+	sdkVersion string
 }
 
 // NewGraphTelemetryHandler creates a new GraphTelemetryHandler.
@@ -20,35 +20,35 @@ type GraphTelemetryHandler struct {
 // Returns:
 //   the new GraphTelemetryHandler.
 func NewGraphTelemetryHandler(options *GraphClientOptions) *GraphTelemetryHandler {
-	callback := func(req *nethttp.Request) error {
-		serviceVersionPrefix := ""
-		if options != nil && options.GraphServiceLibraryVersion != "" {
-			serviceVersionPrefix += "graph-go"
-			if options.GraphServiceVersion != "" {
-				serviceVersionPrefix += "-" + options.GraphServiceVersion
-			}
-			serviceVersionPrefix += "/" + options.GraphServiceLibraryVersion
-			serviceVersionPrefix += ", "
+	serviceVersionPrefix := ""
+	if options != nil && options.GraphServiceLibraryVersion != "" {
+		serviceVersionPrefix += "graph-go"
+		if options.GraphServiceVersion != "" {
+			serviceVersionPrefix += "-" + options.GraphServiceVersion
 		}
-		featuresSuffix := ""
-		if runtime.GOOS != "" {
-			featuresSuffix += " hostOS=" + runtime.GOOS + ";"
-		}
-		if runtime.GOARCH != "" {
-			featuresSuffix += " hostArch=" + runtime.GOARCH + ";"
-		}
-		goVersion := runtime.Version()
-		if goVersion != "" {
-			featuresSuffix += " runtimeEnvironment=" + goVersion + ";"
-		}
-		if featuresSuffix != "" {
-			featuresSuffix = " (" + featuresSuffix[1:] + ")"
-		}
-		req.Header.Add("SdkVersion", serviceVersionPrefix+"graph-go-core/"+CoreVersion+featuresSuffix)
-		req.Header.Add("client-request-id", uuid.NewString())
-		return nil
+		serviceVersionPrefix += "/" + options.GraphServiceLibraryVersion
+		serviceVersionPrefix += ", "
+	}
+	featuresSuffix := ""
+	if runtime.GOOS != "" {
+		featuresSuffix += " hostOS=" + runtime.GOOS + ";"
+	}
+	if runtime.GOARCH != "" {
+		featuresSuffix += " hostArch=" + runtime.GOARCH + ";"
+	}
+	goVersion := runtime.Version()
+	if goVersion != "" {
+		featuresSuffix += " runtimeEnvironment=" + goVersion + ";"
+	}
+	if featuresSuffix != "" {
+		featuresSuffix = " (" + featuresSuffix[1:] + ")"
 	}
 	return &GraphTelemetryHandler{
-		CallbackHandler: *kmiddleware.NewCallbackHandler(callback, nil),
+		sdkVersion: serviceVersionPrefix + "graph-go-core/" + CoreVersion + featuresSuffix,
 	}
+}
+func (middleware GraphTelemetryHandler) Intercept(pipeline khttp.Pipeline, req *nethttp.Request) (*nethttp.Response, error) {
+	req.Header.Add("SdkVersion", middleware.sdkVersion)
+	req.Header.Add("client-request-id", uuid.NewString())
+	return pipeline.Next(req)
 }

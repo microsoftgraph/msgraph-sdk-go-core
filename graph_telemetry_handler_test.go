@@ -5,23 +5,20 @@ import (
 	httptest "net/http/httptest"
 	testing "testing"
 
-	abs "github.com/microsoft/kiota/abstractions/go"
-	khttp "github.com/microsoft/kiota/http/go/nethttp"
 	assert "github.com/stretchr/testify/assert"
 )
 
-type NoopMiddleware struct {
-	response *nethttp.Response
+type NoopPipeline struct {
+	client *nethttp.Client
 }
 
-func (m *NoopMiddleware) Do(req *nethttp.Request, options []abs.RequestOption) (*nethttp.Response, error) {
-	return m.response, nil
+func (pipeline *NoopPipeline) Next(req *nethttp.Request) (*nethttp.Response, error) {
+	return pipeline.client.Do(req)
 }
-func (m *NoopMiddleware) GetNext() khttp.Middleware {
-	return nil
-}
-func (m *NoopMiddleware) SetNext(value khttp.Middleware) {
-
+func newNoopPipeline() *NoopPipeline {
+	return &NoopPipeline{
+		client: nethttp.DefaultClient,
+	}
 }
 
 func TestItCreatesANewHandler(t *testing.T) {
@@ -38,16 +35,15 @@ func TestItAddsHeaders(t *testing.T) {
 	}))
 	defer func() { testServer.Close() }()
 	handler := NewGraphTelemetryHandler(&GraphClientOptions{})
-	handler.SetNext(&NoopMiddleware{})
 	req, err := nethttp.NewRequest(nethttp.MethodGet, testServer.URL, nil)
 	if err != nil {
 		t.Error(err)
 	}
-	resp, err := handler.Do(req, nil)
+	resp, err := handler.Intercept(newNoopPipeline(), req)
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Nil(t, resp)
+	assert.NotNil(t, resp)
 	sdkVersionHeaderValue := req.Header[nethttp.CanonicalHeaderKey("SdkVersion")]
 	assert.NotEmpty(t, sdkVersionHeaderValue)
 	assert.Contains(t, sdkVersionHeaderValue[0], "graph-go-core")
@@ -66,16 +62,15 @@ func TestItAddsServiceLibInfo(t *testing.T) {
 	handler := NewGraphTelemetryHandler(&GraphClientOptions{
 		GraphServiceLibraryVersion: "1.0.0",
 	})
-	handler.SetNext(&NoopMiddleware{})
 	req, err := nethttp.NewRequest(nethttp.MethodGet, testServer.URL, nil)
 	if err != nil {
 		t.Error(err)
 	}
-	resp, err := handler.Do(req, nil)
+	resp, err := handler.Intercept(newNoopPipeline(), req)
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Nil(t, resp)
+	assert.NotNil(t, resp)
 	sdkVersionHeaderValue := req.Header[nethttp.CanonicalHeaderKey("SdkVersion")]
 	assert.NotEmpty(t, sdkVersionHeaderValue)
 	assert.Contains(t, sdkVersionHeaderValue[0], "graph-go/")
@@ -91,16 +86,15 @@ func TestItAddsServiceInfo(t *testing.T) {
 		GraphServiceLibraryVersion: "1.0.0",
 		GraphServiceVersion:        "v1",
 	})
-	handler.SetNext(&NoopMiddleware{})
 	req, err := nethttp.NewRequest(nethttp.MethodGet, testServer.URL, nil)
 	if err != nil {
 		t.Error(err)
 	}
-	resp, err := handler.Do(req, nil)
+	resp, err := handler.Intercept(newNoopPipeline(), req)
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Nil(t, resp)
+	assert.NotNil(t, resp)
 	sdkVersionHeaderValue := req.Header[nethttp.CanonicalHeaderKey("SdkVersion")]
 	assert.NotEmpty(t, sdkVersionHeaderValue)
 	assert.Contains(t, sdkVersionHeaderValue[0], "graph-go-v1/")

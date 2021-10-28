@@ -2,6 +2,7 @@ package msgraphgocore
 
 import (
 	"errors"
+	nethttp "net/http"
 
 	absauth "github.com/microsoft/kiota/abstractions/go/authentication"
 	absser "github.com/microsoft/kiota/abstractions/go/serialization"
@@ -55,17 +56,13 @@ func NewGraphRequestAdapterBaseWithParseNodeFactoryAndSerializationWriterFactory
 // httpClient: the client used to send requests
 // Returns:
 // a new GraphRequestAdapterBase
-func NewGraphRequestAdapterBaseWithParseNodeFactoryAndSerializationWriterFactoryAndHttpClient(authenticationProvider absauth.AuthenticationProvider, clientOptions GraphClientOptions, parseNodeFactory absser.ParseNodeFactory, serializationWriterFactory absser.SerializationWriterFactory, httpClient *khttp.NetHttpMiddlewareClient) (*GraphRequestAdapterBase, error) {
+func NewGraphRequestAdapterBaseWithParseNodeFactoryAndSerializationWriterFactoryAndHttpClient(authenticationProvider absauth.AuthenticationProvider, clientOptions GraphClientOptions, parseNodeFactory absser.ParseNodeFactory, serializationWriterFactory absser.SerializationWriterFactory, httpClient *nethttp.Client) (*GraphRequestAdapterBase, error) {
 	if authenticationProvider == nil {
 		return nil, errors.New("authenticationProvider cannot be nil")
 	}
 	middlewares := GetDefaultMiddlewaresWithOptions(&clientOptions)
 	if httpClient == nil {
-		defaultClient, err := khttp.NewNetHttpMiddlewareClientWithMiddlewares(middlewares)
-		if err != nil {
-			return nil, err
-		}
-		httpClient = defaultClient
+		httpClient = khttp.GetDefaultClient(middlewares...)
 	}
 	if serializationWriterFactory == nil {
 		serializationWriterFactory = absser.DefaultSerializationWriterFactoryInstance

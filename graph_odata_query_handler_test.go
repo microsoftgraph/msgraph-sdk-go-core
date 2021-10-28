@@ -15,16 +15,15 @@ func TestItReplacesQueryParameters(t *testing.T) {
 	}))
 	defer func() { testServer.Close() }()
 	handler := NewGraphODataQueryHandler()
-	handler.SetNext(&NoopMiddleware{})
 	req, err := nethttp.NewRequest(nethttp.MethodGet, testServer.URL+"/?Select=something&exPand=somethingElse(select=nested)&$top=10", nil)
 	if err != nil {
 		t.Error(err)
 	}
-	resp, err := handler.Do(req, nil)
+	resp, err := handler.Intercept(newNoopPipeline(), req)
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Nil(t, resp)
+	assert.NotNil(t, resp)
 	query := req.URL.Query()
 	assert.Equal(t, "something", query.Get("$Select"))
 	assert.Equal(t, "somethingElse($select=nested)", query.Get("$exPand"))

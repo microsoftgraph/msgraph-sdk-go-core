@@ -15,16 +15,16 @@ type GraphODataQueryHandler struct {
 }
 
 type GraphODataQueryHandlerOptions struct {
-	shouldReplace func(*nethttp.Request) bool
+	ShouldReplace func(*nethttp.Request) bool
 }
 
 type graphODataQueryHandlerOptionsInt interface {
 	abs.RequestOption
-	ShouldReplace(*nethttp.Request) bool
+	GetShouldReplace() func(*nethttp.Request) bool
 }
 
-func (o *GraphODataQueryHandlerOptions) ShouldReplace(req *nethttp.Request) bool {
-	return o.shouldReplace(req)
+func (o *GraphODataQueryHandlerOptions) GetShouldReplace() func(req *nethttp.Request) bool {
+	return o.ShouldReplace
 }
 
 var keyValue = abs.RequestOptionKey{
@@ -39,7 +39,7 @@ func (o *GraphODataQueryHandlerOptions) GetKey() abs.RequestOptionKey {
 func NewGraphODataQueryHandler() *GraphODataQueryHandler {
 	return NewGraphODataQueryHandlerWithOptions(
 		GraphODataQueryHandlerOptions{
-			shouldReplace: func(*nethttp.Request) bool {
+			ShouldReplace: func(*nethttp.Request) bool {
 				return true
 			},
 		})
@@ -58,7 +58,7 @@ func NewGraphODataQueryHandlerWithOptions(options GraphODataQueryHandlerOptions)
 
 func (middleware GraphODataQueryHandler) Intercept(pipeline khttp.Pipeline, req *nethttp.Request) (*nethttp.Response, error) {
 	reqOption, ok := req.Context().Value(keyValue).(graphODataQueryHandlerOptionsInt)
-	if ok && reqOption.ShouldReplace(req) || !ok && middleware.handlerOptions.shouldReplace(req) {
+	if ok && reqOption.GetShouldReplace()(req) || !ok && middleware.handlerOptions.ShouldReplace(req) {
 		req.URL.RawQuery = middleware.regex.ReplaceAllString("?"+req.URL.RawQuery, "$1$$$2=")[1:]
 		// inserting and removing the ? sign so we can make no dollar mandatory and avoid adding a second dollar when already here
 	}

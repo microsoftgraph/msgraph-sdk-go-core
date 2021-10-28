@@ -59,7 +59,7 @@ func TestItDoesNotReplaceWithLocalQueryOptions(t *testing.T) {
 	absRequest.SetUri(*targetUrl)
 	absRequest.Method = abs.GET
 	absRequest.AddRequestOptions(&GraphODataQueryHandlerOptions{
-		shouldReplace: func(*nethttp.Request) bool { return false },
+		ShouldReplace: func(*nethttp.Request) bool { return false },
 	})
 	requestAdapter.SendNoContentAsync(*absRequest, nil)
 }

@@ -7,3 +7,8 @@ updates:
   open-pull-requests-limit: 10
   labels:
     - Go
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10

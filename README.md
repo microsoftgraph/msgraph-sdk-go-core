@@ -1,6 +1,6 @@
 # Microsoft Graph Core SDK for Go
 
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/microsoftgraph/msgraph-sdk-go-core/)](https://pkg.go.dev/github.com/microsoftgraph/msgraph-sdk-go-core/)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/microsoftgraph/msgraph-sdk-go-core/)](https://pkg.go.dev/github.com/microsoftgraph/msgraph-sdk-go-core/) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=microsoftgraph_msgraph-sdk-go-core&metric=coverage)](https://sonarcloud.io/dashboard?id=microsoftgraph_msgraph-sdk-go-core) [![Sonarcloud Status](https://sonarcloud.io/api/project_badges/measure?project=microsoftgraph_msgraph-sdk-go-core&metric=alert_status)](https://sonarcloud.io/dashboard?id=microsoftgraph_msgraph-sdk-go-core)
 
 Get started with the Microsoft Graph Core SDK for Go by integrating the [Microsoft Graph API](https://developer.microsoft.com/en-us/graph/get-started/go) into your Go application! You can also have a look at the [Go documentation](https://pkg.go.dev/github.com/microsoftgraph/msgraph-sdk-go-core/)
 

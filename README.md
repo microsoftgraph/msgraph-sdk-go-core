@@ -74,7 +74,7 @@ if err != nil {
 
 ## 3. Make requests against the service
 
-After you have a **GraphRequestAdapterBase** that is authenticated, you can begin making calls against the service. The requests against the service look like our [REST API](https://docs.microsoft.com/graph/overview).
+After you have a **GraphRequestAdapterBase** that is authenticated, you can begin making calls against the service. The requests against the service look like our [REST API](https://docs.microsoft.com/graph/api/overview?view=graph-rest-1.0).
 
 ### 3.1 Get the user's details
 

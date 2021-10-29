@@ -19,4 +19,6 @@ require (
 	github.com/microsoft/kiota/http/go/nethttp v0.0.0-00010101000000-000000000000 // indirect
 	github.com/microsoft/kiota/serialization/go/json v0.0.0-20211020104304-4deb4d4c4659 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
+	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
+	golang.org/x/tools v0.1.7 // indirect
 )

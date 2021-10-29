@@ -30,7 +30,7 @@ An instance of the **GraphRequestAdapterBase** class handles building client. To
 
 For an example of how to get an authentication provider, see [choose a Microsoft Graph authentication provider](https://docs.microsoft.com/graph/sdks/choose-authentication-providers?tabs=Go).
 
-> Note: we are working to add the getting started information for Go to our public documentation, in the meantime the follwing sample should help you getting started.
+> Note: we are working to add the getting started information for Go to our public documentation, in the meantime the following sample should help you getting started.
 
 ```Golang
 import (

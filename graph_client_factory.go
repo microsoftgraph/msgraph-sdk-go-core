@@ -25,8 +25,10 @@ func GetDefaultMiddlewaresWithOptions(options *GraphClientOptions) []khttp.Middl
 }
 
 // Create a new default net/http client with the options configured for the Graph Client
+// Parameters:
+// 		middleware - the middlewares to use for the client
 // Returns:
 // 		the client
-func GetDefaultClient() *nethttp.Client {
-	return khttp.GetDefaultClient()
+func GetDefaultClient(middleware ...khttp.Middleware) *nethttp.Client {
+	return khttp.GetDefaultClient(middleware...)
 }

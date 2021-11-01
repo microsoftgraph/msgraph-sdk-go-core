@@ -62,7 +62,7 @@ func NewGraphRequestAdapterBaseWithParseNodeFactoryAndSerializationWriterFactory
 	}
 	middlewares := GetDefaultMiddlewaresWithOptions(&clientOptions)
 	if httpClient == nil {
-		httpClient = khttp.GetDefaultClient(middlewares...)
+		httpClient = GetDefaultClient(middlewares...)
 	}
 	if serializationWriterFactory == nil {
 		serializationWriterFactory = absser.DefaultSerializationWriterFactoryInstance

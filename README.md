@@ -15,7 +15,7 @@ Get started with the Microsoft Graph Core SDK for Go by integrating the [Microso
 ## 1. Installation
 
 ```Shell
-go get github.com/microsoftgraph/msgraph-sdk-go-core
+go get -u github.com/microsoftgraph/msgraph-sdk-go-core
 ```
 
 ## 2. Getting started

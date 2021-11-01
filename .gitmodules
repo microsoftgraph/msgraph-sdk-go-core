@@ -1,4 +1,0 @@
-[submodule "kiota"]
-	path = kiota
-	url = https://github.com/microsoft/kiota.git
-	branch = feature/go-auth

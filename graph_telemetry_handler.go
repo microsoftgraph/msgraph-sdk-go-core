@@ -15,10 +15,6 @@ type GraphTelemetryHandler struct {
 }
 
 // NewGraphTelemetryHandler creates a new GraphTelemetryHandler.
-// Parameters:
-//   options - the options for the GraphClient.
-// Returns:
-//   the new GraphTelemetryHandler.
 func NewGraphTelemetryHandler(options *GraphClientOptions) *GraphTelemetryHandler {
 	serviceVersionPrefix := ""
 	if options != nil && options.GraphServiceLibraryVersion != "" {

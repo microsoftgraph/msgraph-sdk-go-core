@@ -60,9 +60,8 @@ func NewGraphRequestAdapterBaseWithParseNodeFactoryAndSerializationWriterFactory
 	if authenticationProvider == nil {
 		return nil, errors.New("authenticationProvider cannot be nil")
 	}
-	middlewares := GetDefaultMiddlewaresWithOptions(&clientOptions)
 	if httpClient == nil {
-		httpClient = GetDefaultClient(middlewares...)
+		httpClient = GetDefaultClient(&clientOptions)
 	}
 	if serializationWriterFactory == nil {
 		serializationWriterFactory = absser.DefaultSerializationWriterFactoryInstance

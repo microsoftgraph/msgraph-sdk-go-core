@@ -46,8 +46,6 @@ func NewGraphODataQueryHandler() *GraphODataQueryHandler {
 }
 
 // NewGraphODataQueryHandlerWithOptions creates a new instance of GraphODataQueryHandler
-// Parameters:
-// 		options: GraphODataQueryHandlerOptions options to use for the handler
 func NewGraphODataQueryHandlerWithOptions(options GraphODataQueryHandlerOptions) *GraphODataQueryHandler {
 	replacementRegexp := "(?i)([^$])(count|expand|filter|format|orderby|search|select|skip|skiptoken|top)="
 	return &GraphODataQueryHandler{

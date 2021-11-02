@@ -1,9 +1,10 @@
 package msgraphgocore
 
-// Options for the GraphClient
+// GraphClientOptions represents a combination of GraphServiceVersion and GraphServiceLibraryVersion
+//
+// GraphServiceVersion is version of the targeted service.
+// GraphServiceLibraryVersion is the version of the service library
 type GraphClientOptions struct {
-	// The version of the targeted service for telemetry (v1.0, beta)
-	GraphServiceVersion string
-	// The version of the service library for telemetry (1.2.3)
+	GraphServiceVersion        string
 	GraphServiceLibraryVersion string
 }

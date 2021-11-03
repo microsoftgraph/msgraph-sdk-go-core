@@ -34,8 +34,8 @@ For an example of how to get an authentication provider, see [choose a Microsoft
 
 ```Golang
 import (
-    azidentity "https://github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-    a          "https://github.com/microsoft/kiota/authentication/go/azure"
+    azidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+    a          "github.com/microsoft/kiota/authentication/go/azure"
     "context"
 )
 
@@ -65,7 +65,7 @@ if err != nil {
 You must get a **GraphRequestAdapterBase** object to make requests against the service.
 
 ```Golang
-import core "https://github.com/microsoftgraph/msgraph-sdk-go-core"
+import core "github.com/microsoftgraph/msgraph-sdk-go-core"
 
 adapter, err := core.NewGraphRequestAdapterBase(auth)
 if err != nil {
@@ -83,7 +83,7 @@ After you have a **GraphRequestAdapterBase** that is authenticated, you can begi
 To retrieve the user's details
 
 ```Golang
-import abs "https://github.com/microsoft/kiota/abstractions/go"
+import abs "github.com/microsoft/kiota/abstractions/go"
 
 requestInf := abs.NewRequestInformation()
 targetUrl, err := url.Parse("https://graph.microsoft.com/v1.0/me")

@@ -41,8 +41,9 @@ import (
 cred, err := azidentity.NewDeviceCodeCredential(&azidentity.DeviceCodeCredentialOptions{
     TenantID: "<the tenant id from your app registration>",
     ClientID: "<the client id from your app registration>",
-    UserPrompt: func(message azidentity.DeviceCodeMessage) {
+    UserPrompt: func(ctx context.Context, message azidentity.DeviceCodeMessage) error {
         fmt.Println(message.Message)
+        return nil
     },
 })
 

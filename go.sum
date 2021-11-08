@@ -9,10 +9,14 @@ github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/microsoft/kiota/abstractions/go v0.0.0-20211101171910-f479920da5ba/go.mod h1:qqL2fbKbGlH90hsnmLIXNwDm/LEJWNbEe49SiTEna+0=
 github.com/microsoft/kiota/abstractions/go v0.0.0-20211101175933-7e7ef25b396e h1:QYqtcza84BR9XbB/d/7i2HC/pX0urufMygNyx2HSqSY=
 github.com/microsoft/kiota/abstractions/go v0.0.0-20211101175933-7e7ef25b396e/go.mod h1:qqL2fbKbGlH90hsnmLIXNwDm/LEJWNbEe49SiTEna+0=
+github.com/microsoft/kiota/abstractions/go v0.0.0-20211108130912-dba6de5b66fc h1:qIlaihFFpbFaUkgYgvBK2hvjIQf1QoGcIAtu6bec1iI=
+github.com/microsoft/kiota/abstractions/go v0.0.0-20211108130912-dba6de5b66fc/go.mod h1:qqL2fbKbGlH90hsnmLIXNwDm/LEJWNbEe49SiTEna+0=
 github.com/microsoft/kiota/authentication/go/azure v0.0.0-20211101175933-7e7ef25b396e h1:6KHN5ofYVT3HF/uylyGvbLGAt38xrhSFtrZ6O1X1oQg=
 github.com/microsoft/kiota/authentication/go/azure v0.0.0-20211101175933-7e7ef25b396e/go.mod h1:PMKgz2OtLftNNMIdia56cvhYK7EsHQBJf+rNs1GUfXM=
 github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211101175933-7e7ef25b396e h1:lF182wGTN2zZTUyOB6TwAArqS0lq0U6WtyWWLHM9nhY=
 github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211101175933-7e7ef25b396e/go.mod h1:vsWewGAle3QoUgyHUqptdjpx69kNqG58KTXVpHdml0s=
+github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211108132630-7da008c70103 h1:HyGBPN/04RdfML57PPUs9Q/HbmJ/i2UGcE36q5vY318=
+github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211108132630-7da008c70103/go.mod h1:X5JSRgVba6fXiCfH2v4plxfZlfEYCF4MMSuqjsURZk4=
 github.com/microsoft/kiota/serialization/go/json v0.0.0-20211101175933-7e7ef25b396e/go.mod h1:edr20sXHBVGx5B4Y2sQoXzJqMRIpsCmqT3Fbq1NRiR0=
 github.com/modocache/gover v0.0.0-20171022184752-b58185e213c5/go.mod h1:caMODM3PzxT8aQXRPkAt8xlV/e7d7w8GM5g0fa5F0D8=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

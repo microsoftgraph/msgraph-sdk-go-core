@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial generation
+### Changed
+
+## [0.0.3] - 2021-11-30
 
 ### Changed
+
+- Updated dependencies and switched to Go 17.
 
 ## [0.0.2] - 2021-11-08
 

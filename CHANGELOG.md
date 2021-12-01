@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.0.4] - 2021-12-01
+
+### Changed
+
+- Adds the missing github.com/microsoft/kiota/authentication/go/azure dependency
+
 ## [0.0.3] - 2021-11-30
 
 ### Changed

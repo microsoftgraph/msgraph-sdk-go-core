@@ -43,8 +43,8 @@ func NewGraphTelemetryHandler(options *GraphClientOptions) *GraphTelemetryHandle
 		sdkVersion: serviceVersionPrefix + "graph-go-core/" + CoreVersion + featuresSuffix,
 	}
 }
-func (middleware GraphTelemetryHandler) Intercept(pipeline khttp.Pipeline, req *nethttp.Request) (*nethttp.Response, error) {
+func (middleware GraphTelemetryHandler) Intercept(pipeline khttp.Pipeline, middlewareIndex int, req *nethttp.Request) (*nethttp.Response, error) {
 	req.Header.Add("SdkVersion", middleware.sdkVersion)
 	req.Header.Add("client-request-id", uuid.NewString())
-	return pipeline.Next(req)
+	return pipeline.Next(req, middlewareIndex)
 }

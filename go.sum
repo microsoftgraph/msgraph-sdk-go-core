@@ -14,10 +14,16 @@ github.com/microsoft/kiota/abstractions/go v0.0.0-20211130101617-a4871ba0f35f h1
 github.com/microsoft/kiota/abstractions/go v0.0.0-20211130101617-a4871ba0f35f/go.mod h1:m37MbLdeSZ7DBzKtGI+GmlDSIybJBkKhsvLMqkYosb8=
 github.com/microsoft/kiota/abstractions/go v0.0.0-20211201125630-3501743a5dc5 h1:IL8rUlP+UMFRvL/bu26HkVMnhU7I5IWKciDIWOAQfEQ=
 github.com/microsoft/kiota/abstractions/go v0.0.0-20211201125630-3501743a5dc5/go.mod h1:m37MbLdeSZ7DBzKtGI+GmlDSIybJBkKhsvLMqkYosb8=
+github.com/microsoft/kiota/abstractions/go v0.0.0-20211202082735-099f3c37853a h1:c2vBeXjRwGJUL7aG1gHFwB+LpdDL20XKIOKQWKUoNQk=
+github.com/microsoft/kiota/abstractions/go v0.0.0-20211202082735-099f3c37853a/go.mod h1:m37MbLdeSZ7DBzKtGI+GmlDSIybJBkKhsvLMqkYosb8=
 github.com/microsoft/kiota/authentication/go/azure v0.0.0-20211201125630-3501743a5dc5 h1:d1ilFuzPOvADm4xiFHJ1SZ00SufAgyqfVXd3TCtS8c0=
 github.com/microsoft/kiota/authentication/go/azure v0.0.0-20211201125630-3501743a5dc5/go.mod h1:bmdumwBCIHlVdafcpHNNGzySN/v2mImqWTPgV1adBmA=
 github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211130101617-a4871ba0f35f h1:1VRJ6bj+YljEUqXRf+MgPWdfJZf85/juVCwkS7GviZ8=
 github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211130101617-a4871ba0f35f/go.mod h1:GHdBYJaaiuZKz78KcLSrjcin5FGXUK3e0wlX69NJMwE=
+github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211202082735-099f3c37853a h1:w93KbR22weJ4CKHepKHkirx18j0XMShPWjSRn5ziMwA=
+github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211202082735-099f3c37853a/go.mod h1:GHdBYJaaiuZKz78KcLSrjcin5FGXUK3e0wlX69NJMwE=
+github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211203130928-8449c9e67101 h1:kTG9Tg52O2gNm8LzwyiPyjFendknhU4iqnylDjKQgNU=
+github.com/microsoft/kiota/http/go/nethttp v0.0.0-20211203130928-8449c9e67101/go.mod h1:GHdBYJaaiuZKz78KcLSrjcin5FGXUK3e0wlX69NJMwE=
 github.com/modocache/gover v0.0.0-20171022184752-b58185e213c5/go.mod h1:caMODM3PzxT8aQXRPkAt8xlV/e7d7w8GM5g0fa5F0D8=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

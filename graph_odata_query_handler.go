@@ -54,11 +54,11 @@ func NewGraphODataQueryHandlerWithOptions(options GraphODataQueryHandlerOptions)
 	}
 }
 
-func (middleware GraphODataQueryHandler) Intercept(pipeline khttp.Pipeline, req *nethttp.Request) (*nethttp.Response, error) {
+func (middleware GraphODataQueryHandler) Intercept(pipeline khttp.Pipeline, middlewareIndex int, req *nethttp.Request) (*nethttp.Response, error) {
 	reqOption, ok := req.Context().Value(keyValue).(graphODataQueryHandlerOptionsInt)
 	if ok && reqOption.GetShouldReplace()(req) || !ok && middleware.handlerOptions.ShouldReplace(req) {
 		req.URL.RawQuery = middleware.regex.ReplaceAllString("?"+req.URL.RawQuery, "$1$$$2=")[1:]
 		// inserting and removing the ? sign so we can make no dollar mandatory and avoid adding a second dollar when already here
 	}
-	return pipeline.Next(req)
+	return pipeline.Next(req, middlewareIndex)
 }

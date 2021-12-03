@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.0.5] - 2021-12-02
+
+### Changed
+
+- Fixes a bug where the middleware pipeline would run only on the first request of the client/adapter/http client.
+
 ## [0.0.4] - 2021-12-01
 
 ### Changed

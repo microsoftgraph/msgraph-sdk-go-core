@@ -23,7 +23,7 @@ func TestItReplacesQueryParameters(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	resp, err := handler.Intercept(newNoopPipeline(), req)
+	resp, err := handler.Intercept(newNoopPipeline(), 0, req)
 	if err != nil {
 		t.Error(err)
 	}

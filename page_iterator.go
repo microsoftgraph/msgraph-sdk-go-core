@@ -24,7 +24,7 @@ type PageIterator struct {
 
 type ParsableConstructor func() serialization.Parsable
 
-func NewPageIterator(page Page, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) *PageIterator {
+func NewPageIterator(page interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) *PageIterator {
 	abstractions.RegisterDefaultSerializer(func() serialization.SerializationWriterFactory {
 		return jsonserialization.NewJsonSerializationWriterFactory()
 	})
@@ -33,7 +33,7 @@ func NewPageIterator(page Page, reqAdapter GraphRequestAdapterBase, constructorF
 	})
 
 	return &PageIterator{
-		page,
+		page.(Page),
 		reqAdapter,
 		0, // pauseIndex helps us remember where we paused enumeration in the page.
 		constructorFunc,

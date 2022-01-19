@@ -11,7 +11,7 @@ import (
 type Item interface{}
 
 type Page interface {
-	GetValue() []Item
+	GetValue() []interface{}
 	GetNextLink() *string
 }
 

@@ -1,45 +1,75 @@
 package msgraphgocore
 
-import "net/http"
+import (
+	abstractions "github.com/microsoft/kiota/abstractions/go"
+	serialization "github.com/microsoft/kiota/abstractions/go/serialization"
+	jsonserialization "github.com/microsoft/kiota/serialization/go/json"
+	"log"
+	url "net/url"
+)
 
-type Item interface {
-	GetDisplayName() string
-}
+type Item interface{}
 
 type Page interface {
 	GetValue() []Item
-	GetNextLink() string
-	GetNextPage() Page
+	GetNextLink() *string
 }
 
 type PageIterator struct {
-	page       Page
-	client     http.Client
-	pauseIndex int
+	page            Page
+	reqAdapter      GraphRequestAdapterBase
+	pauseIndex      int
+	constructorFunc ParsableConstructor
 }
 
-func NewPageIterator(page Page, client http.Client) *PageIterator {
-	//TODO: Pass client to page
+type ParsableConstructor func() serialization.Parsable
+
+func NewPageIterator(page Page, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) *PageIterator {
+	abstractions.RegisterDefaultSerializer(func() serialization.SerializationWriterFactory {
+		return jsonserialization.NewJsonSerializationWriterFactory()
+	})
+	abstractions.RegisterDefaultDeserializer(func() serialization.ParseNodeFactory {
+		return jsonserialization.NewJsonParseNodeFactory()
+	})
 
 	return &PageIterator{
 		page,
-		client,
+		reqAdapter,
 		0, // pauseIndex helps us remember where we paused enumeration in the page.
+		constructorFunc,
 	}
 }
 
 func (pI *PageIterator) HasNext() bool {
-	if pI.page.GetNextLink() == "" {
+	if pI.page.GetNextLink() == nil {
 		return false
 	}
 	return true
 }
 
 func (pI *PageIterator) Next() Page {
-	nextPage := pI.page.GetNextPage()
-	pI.page = nextPage
+	nextPage := pI.getNextPage().(Page)
 
+	pI.page = nextPage
 	return nextPage
+}
+
+func (pI *PageIterator) getNextPage() interface{} {
+	nextLink, err := url.Parse(*pI.page.GetNextLink())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	requestInfo := abstractions.NewRequestInformation()
+	requestInfo.Method = abstractions.GET
+	requestInfo.SetUri(*nextLink)
+
+	res, err := pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return res
 }
 
 func (pI *PageIterator) Iterate(callback func(pageItem Item) bool) {

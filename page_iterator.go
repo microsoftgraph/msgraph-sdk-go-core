@@ -12,8 +12,8 @@ import (
 )
 
 type Page interface {
-	GetValue() []interface{}
-	GetNextLink() *string
+	getValue() []interface{}
+	getNextLink() *string
 }
 
 type PageIterator struct {
@@ -30,7 +30,7 @@ type PageResult struct {
 	value    []interface{}
 }
 
-func (p *PageResult) GetValue() []interface{} {
+func (p *PageResult) getValue() []interface{} {
 	if p == nil {
 		return nil
 	}
@@ -38,7 +38,7 @@ func (p *PageResult) GetValue() []interface{} {
 	return p.value
 }
 
-func (p *PageResult) GetNextLink() *string {
+func (p *PageResult) getNextLink() *string {
 	if p == nil {
 		return nil
 	}
@@ -62,14 +62,14 @@ func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constr
 	}
 }
 
-func (pI *PageIterator) HasNext() bool {
-	if pI.currentPage == nil || pI.currentPage.GetNextLink() == nil {
+func (pI *PageIterator) hasNext() bool {
+	if pI.currentPage == nil || pI.currentPage.getNextLink() == nil {
 		return false
 	}
 	return true
 }
 
-func (pI *PageIterator) Next() Page {
+func (pI *PageIterator) next() Page {
 	nextPage := pI.getNextPage()
 
 	pI.currentPage = nextPage
@@ -77,11 +77,11 @@ func (pI *PageIterator) Next() Page {
 }
 
 func (pI *PageIterator) getNextPage() *PageResult {
-	if pI.currentPage.GetNextLink() == nil {
+	if pI.currentPage.getNextLink() == nil {
 		return nil
 	}
 
-	nextLink, err := url.Parse(*pI.currentPage.GetNextLink())
+	nextLink, err := url.Parse(*pI.currentPage.getNextLink())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -107,7 +107,7 @@ func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) {
 			return
 		}
 
-		pI.Next()
+		pI.next()
 		pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
 	}
 }
@@ -119,7 +119,7 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 		return false
 	}
 
-	pageItems := pI.currentPage.GetValue()
+	pageItems := pI.currentPage.getValue()
 	if pageItems == nil {
 		return false
 	}

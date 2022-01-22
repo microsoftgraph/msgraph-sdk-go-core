@@ -1,9 +1,11 @@
-package msgraphgocore
+package msgraphgocore_test
 
 import (
 	nethttp "net/http"
 	httptest "net/http/httptest"
 	testing "testing"
+
+	msgraphgocore "github.com/microsoftgraph/msgraph-sdk-go-core"
 
 	assert "github.com/stretchr/testify/assert"
 )
@@ -22,7 +24,7 @@ func newNoopPipeline() *NoopPipeline {
 }
 
 func TestItCreatesANewHandler(t *testing.T) {
-	handler := NewGraphTelemetryHandler(&GraphClientOptions{})
+	handler := msgraphgocore.NewGraphTelemetryHandler(&msgraphgocore.GraphClientOptions{})
 	if handler == nil {
 		t.Error("handler is nil")
 	}
@@ -34,7 +36,7 @@ func TestItAddsHeaders(t *testing.T) {
 		res.Write([]byte("body"))
 	}))
 	defer func() { testServer.Close() }()
-	handler := NewGraphTelemetryHandler(&GraphClientOptions{})
+	handler := msgraphgocore.NewGraphTelemetryHandler(&msgraphgocore.GraphClientOptions{})
 	req, err := nethttp.NewRequest(nethttp.MethodGet, testServer.URL, nil)
 	if err != nil {
 		t.Error(err)
@@ -59,7 +61,7 @@ func TestItAddsServiceLibInfo(t *testing.T) {
 		res.Write([]byte("body"))
 	}))
 	defer func() { testServer.Close() }()
-	handler := NewGraphTelemetryHandler(&GraphClientOptions{
+	handler := msgraphgocore.NewGraphTelemetryHandler(&msgraphgocore.GraphClientOptions{
 		GraphServiceLibraryVersion: "1.0.0",
 	})
 	req, err := nethttp.NewRequest(nethttp.MethodGet, testServer.URL, nil)
@@ -82,7 +84,7 @@ func TestItAddsServiceInfo(t *testing.T) {
 		res.Write([]byte("body"))
 	}))
 	defer func() { testServer.Close() }()
-	handler := NewGraphTelemetryHandler(&GraphClientOptions{
+	handler := msgraphgocore.NewGraphTelemetryHandler(&msgraphgocore.GraphClientOptions{
 		GraphServiceLibraryVersion: "1.0.0",
 		GraphServiceVersion:        "v1",
 	})

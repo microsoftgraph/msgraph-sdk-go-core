@@ -1,4 +1,4 @@
-package msgraphgocore
+package msgraphgocore_test
 
 import (
 	nethttp "net/http"
@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 	testing "testing"
+
+	msgraphgocore "github.com/microsoftgraph/msgraph-sdk-go-core"
 
 	abs "github.com/microsoft/kiota/abstractions/go"
 	absauth "github.com/microsoft/kiota/abstractions/go/authentication"
@@ -18,7 +20,7 @@ func TestItReplacesQueryParameters(t *testing.T) {
 		res.Write([]byte("body"))
 	}))
 	defer func() { testServer.Close() }()
-	handler := NewGraphODataQueryHandler()
+	handler := msgraphgocore.NewGraphODataQueryHandler()
 	req, err := nethttp.NewRequest(nethttp.MethodGet, testServer.URL+"/?Select=something&exPand=somethingElse(select=nested)&$top=10", nil)
 	if err != nil {
 		t.Error(err)
@@ -44,7 +46,7 @@ func TestItDoesNotReplaceWithLocalQueryOptions(t *testing.T) {
 	}))
 	defer func() { testServer.Close() }()
 	auth := &absauth.AnonymousAuthenticationProvider{}
-	requestAdapter, err := NewGraphRequestAdapterBase(auth, GraphClientOptions{
+	requestAdapter, err := msgraphgocore.NewGraphRequestAdapterBase(auth, msgraphgocore.GraphClientOptions{
 		GraphServiceVersion:        "na",
 		GraphServiceLibraryVersion: "na",
 	})
@@ -58,7 +60,7 @@ func TestItDoesNotReplaceWithLocalQueryOptions(t *testing.T) {
 	}
 	absRequest.SetUri(*targetUrl)
 	absRequest.Method = abs.GET
-	absRequest.AddRequestOptions(&GraphODataQueryHandlerOptions{
+	absRequest.AddRequestOptions(&msgraphgocore.GraphODataQueryHandlerOptions{
 		ShouldReplace: func(*nethttp.Request) bool { return false },
 	})
 	requestAdapter.SendNoContentAsync(*absRequest, nil)

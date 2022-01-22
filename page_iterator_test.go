@@ -48,7 +48,7 @@ func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 
 	}))
 	defer testServer.Close()
-	pageIterator := NewPageIterator(graphResponse, *reqAdapter, ParsableCons)
+	pageIterator := NewPageIterator(graphResponse, *reqAdapter, ParsableCons, nil)
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {
 		item := pageItem.(msgraphgocore_test.User)
@@ -81,7 +81,7 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 	mockPath := testServer.URL + "/next-page"
 	graphResponse.SetNextLink(&mockPath)
 
-	pageIterator := NewPageIterator(graphResponse, *reqAdapter, ParsableCons)
+	pageIterator := NewPageIterator(graphResponse, *reqAdapter, ParsableCons, nil)
 	res := make([]string, 0)
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {
@@ -118,7 +118,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 	mockPath := testServer.URL + "/next-page"
 	response.SetNextLink(&mockPath)
 
-	pageIterator := NewPageIterator(response, *reqAdapter, ParsableCons)
+	pageIterator := NewPageIterator(response, *reqAdapter, ParsableCons, nil)
 	pageIterator.Iterate(func(pageItem interface{}) bool {
 		item := pageItem.(msgraphgocore_test.User)
 		res = append(res, *item.GetId())

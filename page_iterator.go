@@ -21,6 +21,7 @@ type PageIterator struct {
 	reqAdapter      GraphRequestAdapterBase
 	pauseIndex      int
 	constructorFunc ParsableConstructor
+	headers         map[string]string
 }
 
 type ParsableConstructor func() serialization.Parsable
@@ -46,7 +47,7 @@ func (p *PageResult) getNextLink() *string {
 	return p.nextLink
 }
 
-func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) *PageIterator {
+func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor, headers map[string]string) *PageIterator {
 	abstractions.RegisterDefaultSerializer(func() serialization.SerializationWriterFactory {
 		return jsonserialization.NewJsonSerializationWriterFactory()
 	})
@@ -59,6 +60,21 @@ func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constr
 		reqAdapter,
 		0, // pauseIndex helps us remember where we paused enumeration in the page.
 		constructorFunc,
+		headers,
+	}
+}
+
+func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) {
+	for pI.currentPage != nil {
+		keepIterating := pI.enumerate(callback)
+
+		if !keepIterating {
+			// Callback returned false, stop iterating through pages.
+			return
+		}
+
+		pI.next()
+		pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
 	}
 }
 
@@ -89,6 +105,7 @@ func (pI *PageIterator) getNextPage() *PageResult {
 	requestInfo := abstractions.NewRequestInformation()
 	requestInfo.Method = abstractions.GET
 	requestInfo.SetUri(*nextLink)
+	requestInfo.Headers = pI.headers
 
 	res, err := pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil)
 	if err != nil {
@@ -96,20 +113,6 @@ func (pI *PageIterator) getNextPage() *PageResult {
 	}
 
 	return convertToPage(res)
-}
-
-func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) {
-	for pI.currentPage != nil {
-		keepIterating := pI.enumerate(callback)
-
-		if !keepIterating {
-			// Callback returned false, stop iterating through pages.
-			return
-		}
-
-		pI.next()
-		pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
-	}
 }
 
 func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {

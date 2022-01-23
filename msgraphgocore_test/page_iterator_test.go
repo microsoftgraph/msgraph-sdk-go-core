@@ -7,7 +7,7 @@ import (
 	testing "testing"
 
 	msgraphgocore "github.com/microsoftgraph/msgraph-sdk-go-core"
-	"github.com/microsoftgraph/msgraph-sdk-go-core/mocks"
+	"github.com/microsoftgraph/msgraph-sdk-go-core/internal"
 
 	"github.com/microsoft/kiota/abstractions/go/authentication"
 	"github.com/microsoft/kiota/abstractions/go/serialization"
@@ -29,7 +29,7 @@ var reqAdapter, _ = msgraphgocore.NewGraphRequestAdapterBase(&authentication.Ano
 })
 
 func ParsableCons() serialization.Parsable {
-	return mocks.NewUsersResponse()
+	return internal.NewUsersResponse()
 }
 
 func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
@@ -53,7 +53,7 @@ func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 	pageIterator := msgraphgocore.NewPageIterator(graphResponse, *reqAdapter, ParsableCons, nil)
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {
-		item := pageItem.(mocks.User)
+		item := pageItem.(internal.User)
 
 		res = append(res, *item.GetDisplayName())
 		return !(*item.GetId() == "2")
@@ -87,7 +87,7 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 	res := make([]string, 0)
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {
-		item := pageItem.(mocks.User)
+		item := pageItem.(internal.User)
 		res = append(res, *item.GetId())
 		return true
 	})
@@ -122,7 +122,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 
 	pageIterator := msgraphgocore.NewPageIterator(response, *reqAdapter, ParsableCons, nil)
 	pageIterator.Iterate(func(pageItem interface{}) bool {
-		item := pageItem.(mocks.User)
+		item := pageItem.(internal.User)
 		res = append(res, *item.GetId())
 
 		if *item.GetId() == "2" {
@@ -133,7 +133,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 	assert.Equal(t, res, []string{"0", "1", "2"})
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {
-		item := pageItem.(mocks.User)
+		item := pageItem.(internal.User)
 		res2 = append(res2, *item.GetId())
 
 		return true
@@ -141,14 +141,14 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 	assert.Equal(t, res2, []string{"2", "3", "4", "10"})
 }
 
-func buildGraphResponse() *mocks.UsersResponse {
-	var res = mocks.NewUsersResponse()
+func buildGraphResponse() *internal.UsersResponse {
+	var res = internal.NewUsersResponse()
 
 	nextLink := "next-page"
-	users := make([]mocks.User, 0)
+	users := make([]internal.User, 0)
 
 	for i := 0; i < 5; i++ {
-		u := mocks.NewUser()
+		u := internal.NewUser()
 		id := fmt.Sprint(i)
 		u.SetId(&id)
 

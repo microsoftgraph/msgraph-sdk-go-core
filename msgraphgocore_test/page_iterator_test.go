@@ -138,7 +138,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 
 		return true
 	})
-	assert.Equal(t, res2, []string{"2", "3", "4", "10"})
+	assert.Equal(t, res2, []string{"3", "4", "10"})
 }
 
 func buildGraphResponse() *internal.UsersResponse {

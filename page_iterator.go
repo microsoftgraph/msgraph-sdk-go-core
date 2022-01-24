@@ -127,6 +127,10 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 		return false
 	}
 
+	if pI.pauseIndex >= len(pageItems) {
+		return false
+	}
+
 	// start/continue enumerating page items from  pauseIndex.
 	// this makes it possible to resume iteration from where we paused iteration.
 	for i := pI.pauseIndex; i < len(pageItems); i++ {
@@ -135,7 +139,8 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 		if !keepIterating {
 			// Callback returned false, pause! stop enumerating page items. Set pauseIndex so that we know
 			// where to resume from.
-			pI.pauseIndex = i
+			// Resumes from the next item
+			pI.pauseIndex = i + 1
 			break
 		}
 	}

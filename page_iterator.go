@@ -69,7 +69,7 @@ func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constr
 	}
 }
 
-// Iterate traverses all pages and enumerates all items in a page.
+// Iterate traverses all pages and enumerates all items in the current page.
 //
 // Iterate receives a callback function which is called with each item in the current page as an argument. The callback function
 // returns a boolean. To traverse and enumerate all pages always return true and to pause traversal and enumeration

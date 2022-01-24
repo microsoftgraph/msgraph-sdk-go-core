@@ -125,11 +125,9 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 		item := pageItem.(internal.User)
 		res = append(res, *item.GetId())
 
-		if *item.GetId() == "2" {
-			return false
-		}
-		return true
+		return *item.GetId() != "2"
 	})
+
 	assert.Equal(t, res, []string{"0", "1", "2"})
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {

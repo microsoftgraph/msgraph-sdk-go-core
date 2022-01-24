@@ -9,10 +9,21 @@ import (
 	msgraphgocore "github.com/microsoftgraph/msgraph-sdk-go-core"
 	"github.com/microsoftgraph/msgraph-sdk-go-core/internal"
 
+	abstractions "github.com/microsoft/kiota/abstractions/go"
 	"github.com/microsoft/kiota/abstractions/go/authentication"
 	"github.com/microsoft/kiota/abstractions/go/serialization"
+	jsonserialization "github.com/microsoft/kiota/serialization/go/json"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	abstractions.RegisterDefaultSerializer(func() serialization.SerializationWriterFactory {
+		return jsonserialization.NewJsonSerializationWriterFactory()
+	})
+	abstractions.RegisterDefaultDeserializer(func() serialization.ParseNodeFactory {
+		return jsonserialization.NewJsonParseNodeFactory()
+	})
+}
 
 type PageItem struct {
 	DisplayName string

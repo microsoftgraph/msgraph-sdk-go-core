@@ -8,7 +8,6 @@ import (
 
 	abstractions "github.com/microsoft/kiota/abstractions/go"
 	"github.com/microsoft/kiota/abstractions/go/serialization"
-	jsonserialization "github.com/microsoft/kiota/serialization/go/json"
 )
 
 type Page interface {
@@ -53,12 +52,6 @@ func (p *PageResult) getNextLink() *string {
 // It has three parameters. res is the graph response from the initial request and represents the first page.
 // reqAdapter is used for getting the next page and constructorFunc is used for serializing next page's response to the specified type.
 func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) *PageIterator {
-	abstractions.RegisterDefaultSerializer(func() serialization.SerializationWriterFactory {
-		return jsonserialization.NewJsonSerializationWriterFactory()
-	})
-	abstractions.RegisterDefaultDeserializer(func() serialization.ParseNodeFactory {
-		return jsonserialization.NewJsonParseNodeFactory()
-	})
 
 	return &PageIterator{
 		currentPage:     convertToPage(res),

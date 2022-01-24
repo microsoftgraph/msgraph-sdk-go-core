@@ -47,7 +47,7 @@ func (p *PageResult) getNextLink() *string {
 	return p.nextLink
 }
 
-func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor, headers map[string]string) *PageIterator {
+func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) *PageIterator {
 	abstractions.RegisterDefaultSerializer(func() serialization.SerializationWriterFactory {
 		return jsonserialization.NewJsonSerializationWriterFactory()
 	})
@@ -56,11 +56,11 @@ func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constr
 	})
 
 	return &PageIterator{
-		convertToPage(res),
-		reqAdapter,
-		0, // pauseIndex helps us remember where we paused enumeration in the page.
-		constructorFunc,
-		headers,
+		currentPage:     convertToPage(res),
+		reqAdapter:      reqAdapter,
+		pauseIndex:      0,
+		constructorFunc: constructorFunc,
+		headers:         map[string]string{},
 	}
 }
 
@@ -76,6 +76,10 @@ func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) {
 		pI.next()
 		pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
 	}
+}
+
+func (pI *PageIterator) SetHeaders(headers map[string]string) {
+	pI.headers = headers
 }
 
 func (pI *PageIterator) hasNext() bool {

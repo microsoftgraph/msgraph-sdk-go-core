@@ -16,6 +16,7 @@ type Page interface {
 	getNextLink() *string
 }
 
+// PageIterator represents an iterator object that can be used to get subsequent pages of a collection.
 type PageIterator struct {
 	currentPage     Page
 	reqAdapter      GraphRequestAdapterBase
@@ -47,6 +48,10 @@ func (p *PageResult) getNextLink() *string {
 	return p.nextLink
 }
 
+// NewpageIterator creates an iterator instance
+//
+// It has three parameters. res is the graph response from the initial request and represents the first page.
+// reqAdapter is used for getting the next page and constructorFunc is used for serializing next page's response to the specified type.
 func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) *PageIterator {
 	abstractions.RegisterDefaultSerializer(func() serialization.SerializationWriterFactory {
 		return jsonserialization.NewJsonSerializationWriterFactory()
@@ -64,6 +69,19 @@ func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constr
 	}
 }
 
+// Iterate traverses all pages and enumerates all items in a page.
+//
+// Iterate receives a callback function which is called with each item in the current page as an argument. The callback function
+// returns a boolean. To traverse and enumerate all pages always return true and to pause traversal and enumeration
+// return false from the callback.
+//
+// Example
+//      pageIterator := NewPageIterator(resp, reqAdapter, parsableCons)
+//      callbackFunc := func (pageItem interface{}) bool {
+//          fmt.Println(pageitem.GetDisplayName())
+//          return true
+//      }
+//      pageIterator.Iterate(callbackFunc)
 func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) {
 	for pI.currentPage != nil {
 		keepIterating := pI.enumerate(callback)
@@ -78,6 +96,9 @@ func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) {
 	}
 }
 
+// SetHeaders provides headers for requests made to get subsequent pages
+//
+// Headers in the initial request -- request to get the first page -- are not included in subsequent page requests.
 func (pI *PageIterator) SetHeaders(headers map[string]string) {
 	pI.headers = headers
 }

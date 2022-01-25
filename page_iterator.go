@@ -1,7 +1,7 @@
 package msgraphgocore
 
 import (
-	"log"
+	"errors"
 	"net/url"
 	"reflect"
 	"unsafe"
@@ -51,42 +51,51 @@ func (p *PageResult) getNextLink() *string {
 //
 // It has three parameters. res is the graph response from the initial request and represents the first page.
 // reqAdapter is used for getting the next page and constructorFunc is used for serializing next page's response to the specified type.
-func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) *PageIterator {
+func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) (*PageIterator, error) {
+	page, err := convertToPage(res)
+	if err != nil {
+		return nil, err
+	}
 
 	return &PageIterator{
-		currentPage:     convertToPage(res),
+		currentPage:     page,
 		reqAdapter:      reqAdapter,
 		pauseIndex:      0,
 		constructorFunc: constructorFunc,
 		headers:         map[string]string{},
-	}
+	}, nil
 }
 
-// Iterate traverses all pages and enumerates all items in the current page.
+// Iterate traverses all pages and enumerates all items in the current page and returns an error if something goes wrong.
 //
 // Iterate receives a callback function which is called with each item in the current page as an argument. The callback function
 // returns a boolean. To traverse and enumerate all pages always return true and to pause traversal and enumeration
 // return false from the callback.
 //
 // Example
-//      pageIterator := NewPageIterator(resp, reqAdapter, parsableCons)
+//      pageIterator, err := NewPageIterator(resp, reqAdapter, parsableCons)
 //      callbackFunc := func (pageItem interface{}) bool {
 //          fmt.Println(pageitem.GetDisplayName())
 //          return true
 //      }
-//      pageIterator.Iterate(callbackFunc)
-func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) {
+//      err := pageIterator.Iterate(callbackFunc)
+func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) error {
 	for pI.currentPage != nil {
 		keepIterating := pI.enumerate(callback)
 
 		if !keepIterating {
 			// Callback returned false, stop iterating through pages.
-			return
+			return nil
 		}
 
-		pI.next()
+		err := pI.next()
+		if err != nil {
+			return err
+		}
 		pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
 	}
+
+	return nil
 }
 
 // SetHeaders provides headers for requests made to get subsequent pages
@@ -103,21 +112,24 @@ func (pI *PageIterator) hasNext() bool {
 	return true
 }
 
-func (pI *PageIterator) next() Page {
-	nextPage := pI.getNextPage()
+func (pI *PageIterator) next() error {
+	nextPage, err := pI.getNextPage()
+	if err != nil {
+		return err
+	}
 
 	pI.currentPage = nextPage
-	return nextPage
+	return nil
 }
 
-func (pI *PageIterator) getNextPage() *PageResult {
+func (pI *PageIterator) getNextPage() (*PageResult, error) {
 	if pI.currentPage.getNextLink() == nil {
-		return nil
+		return nil, nil
 	}
 
 	nextLink, err := url.Parse(*pI.currentPage.getNextLink())
 	if err != nil {
-		log.Fatal(err)
+		return nil, errors.New("Parsing nextLink url failed")
 	}
 
 	requestInfo := abstractions.NewRequestInformation()
@@ -127,7 +139,7 @@ func (pI *PageIterator) getNextPage() *PageResult {
 
 	res, err := pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, errors.New("Fetching next page failed")
 	}
 
 	return convertToPage(res)
@@ -166,10 +178,13 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 	return keepIterating
 }
 
-func convertToPage(response interface{}) *PageResult {
+func convertToPage(response interface{}) (*PageResult, error) {
 	ref := reflect.ValueOf(response).Elem()
 	value := ref.FieldByName("value")
 	value = reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
+	if value.IsNil() {
+		return nil, errors.New("value property missing in response object")
+	}
 
 	nextLink := ref.FieldByName("nextLink")
 	nextLink = reflect.NewAt(nextLink.Type(), unsafe.Pointer(nextLink.UnsafeAddr())).Elem()
@@ -184,5 +199,5 @@ func convertToPage(response interface{}) *PageResult {
 	return &PageResult{
 		nextLink: nextLink.Interface().(*string),
 		value:    collected,
-	}
+	}, nil
 }

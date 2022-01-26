@@ -181,10 +181,10 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 func convertToPage(response interface{}) (*PageResult, error) {
 	ref := reflect.ValueOf(response).Elem()
 	value := ref.FieldByName("value")
-	value = reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
 	if value.IsNil() {
 		return nil, errors.New("value property missing in response object")
 	}
+	value = reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
 
 	nextLink := ref.FieldByName("nextLink")
 	nextLink = reflect.NewAt(nextLink.Type(), unsafe.Pointer(nextLink.UnsafeAddr())).Elem()

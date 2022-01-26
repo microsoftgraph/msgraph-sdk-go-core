@@ -179,7 +179,11 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 }
 
 func convertToPage(response interface{}) (*PageResult, error) {
+	if response == nil {
+		return nil, errors.New("response cannot be nil")
+	}
 	ref := reflect.ValueOf(response).Elem()
+
 	value := ref.FieldByName("value")
 	if value.IsNil() {
 		return nil, errors.New("value property missing in response object")
@@ -187,7 +191,11 @@ func convertToPage(response interface{}) (*PageResult, error) {
 	value = reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
 
 	nextLink := ref.FieldByName("nextLink")
-	nextLink = reflect.NewAt(nextLink.Type(), unsafe.Pointer(nextLink.UnsafeAddr())).Elem()
+	var link *string
+	if !nextLink.IsNil() {
+		nextLink = reflect.NewAt(nextLink.Type(), unsafe.Pointer(nextLink.UnsafeAddr())).Elem()
+		link = nextLink.Interface().(*string)
+	}
 
 	// Collect all entities in the value slice.
 	// This converts a graph slice ie []graph.User to a dynamic slice []interface{}
@@ -197,7 +205,7 @@ func convertToPage(response interface{}) (*PageResult, error) {
 	}
 
 	return &PageResult{
-		nextLink: nextLink.Interface().(*string),
+		nextLink: link,
 		value:    collected,
 	}, nil
 }

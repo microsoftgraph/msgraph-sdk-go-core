@@ -10,14 +10,9 @@ import (
 	"github.com/microsoft/kiota/abstractions/go/serialization"
 )
 
-type Page interface {
-	getValue() []interface{}
-	getNextLink() *string
-}
-
 // PageIterator represents an iterator object that can be used to get subsequent pages of a collection.
 type PageIterator struct {
-	currentPage     Page
+	currentPage     *PageResult
 	reqAdapter      GraphRequestAdapterBase
 	pauseIndex      int
 	constructorFunc ParsableConstructor
@@ -27,6 +22,7 @@ type PageIterator struct {
 
 type ParsableConstructor func() serialization.Parsable
 
+// PageResult represents a page object built from a graph response object
 type PageResult struct {
 	nextLink *string
 	value    []interface{}

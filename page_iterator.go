@@ -106,6 +106,7 @@ func (pI *PageIterator) SetHeaders(headers map[string]string) {
 	pI.headers = headers
 }
 
+// SetReqOptions provides configuration for handlers during requests for subsequent pages
 func (pI *PageIterator) SetReqOptions(reqOptions []abstractions.RequestOption) {
 	pI.reqOptions = reqOptions
 }

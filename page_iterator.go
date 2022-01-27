@@ -22,6 +22,7 @@ type PageIterator struct {
 	pauseIndex      int
 	constructorFunc ParsableConstructor
 	headers         map[string]string
+	reqOptions      []abstractions.RequestOption
 }
 
 type ParsableConstructor func() serialization.Parsable
@@ -105,6 +106,10 @@ func (pI *PageIterator) SetHeaders(headers map[string]string) {
 	pI.headers = headers
 }
 
+func (pI *PageIterator) SetReqOptions(reqOptions []abstractions.RequestOption) {
+	pI.reqOptions = reqOptions
+}
+
 func (pI *PageIterator) hasNext() bool {
 	if pI.currentPage == nil || pI.currentPage.getNextLink() == nil {
 		return false
@@ -136,6 +141,7 @@ func (pI *PageIterator) getNextPage() (*PageResult, error) {
 	requestInfo.Method = abstractions.GET
 	requestInfo.SetUri(*nextLink)
 	requestInfo.Headers = pI.headers
+	requestInfo.AddRequestOptions(pI.reqOptions...)
 
 	res, err := pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil)
 	if err != nil {

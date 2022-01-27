@@ -105,13 +105,6 @@ func (pI *PageIterator) SetReqOptions(reqOptions []abstractions.RequestOption) {
 	pI.reqOptions = reqOptions
 }
 
-func (pI *PageIterator) hasNext() bool {
-	if pI.currentPage.getNextLink() == nil {
-		return false
-	}
-	return true
-}
-
 func (pI *PageIterator) next() error {
 	resp, err := pI.fetchNextPage()
 	if err != nil {

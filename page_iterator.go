@@ -113,8 +113,7 @@ func (pI *PageIterator) hasNext() bool {
 }
 
 func (pI *PageIterator) next() error {
-
-	resp, err := pI.getNextPage()
+	resp, err := pI.fetchNextPage()
 	if err != nil {
 		return err
 	}
@@ -128,7 +127,7 @@ func (pI *PageIterator) next() error {
 	return nil
 }
 
-func (pI *PageIterator) getNextPage() (serialization.Parsable, error) {
+func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
 	var graphResponse serialization.Parsable
 	var err error
 

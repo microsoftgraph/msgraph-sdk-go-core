@@ -16,3 +16,6 @@
 
 # Jetbrains files
 .idea/
+
+# kiota
+kiota/

@@ -12,7 +12,7 @@ import (
 
 // PageIterator represents an iterator object that can be used to get subsequent pages of a collection.
 type PageIterator struct {
-	currentPage     *PageResult
+	currentPage     PageResult
 	reqAdapter      GraphRequestAdapterBase
 	pauseIndex      int
 	constructorFunc ParsableConstructor
@@ -77,7 +77,7 @@ func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constr
 //      }
 //      err := pageIterator.Iterate(callbackFunc)
 func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) error {
-	for pI.currentPage != nil {
+	for {
 		keepIterating := pI.enumerate(callback)
 
 		if !keepIterating {
@@ -91,8 +91,6 @@ func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) error 
 		}
 		pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
 	}
-
-	return nil
 }
 
 // SetHeaders provides headers for requests made to get subsequent pages
@@ -107,31 +105,32 @@ func (pI *PageIterator) SetReqOptions(reqOptions []abstractions.RequestOption) {
 	pI.reqOptions = reqOptions
 }
 
-func (pI *PageIterator) hasNext() bool {
-	if pI.currentPage == nil || pI.currentPage.getNextLink() == nil {
-		return false
-	}
-	return true
-}
-
 func (pI *PageIterator) next() error {
-	nextPage, err := pI.getNextPage()
+	resp, err := pI.fetchNextPage()
 	if err != nil {
 		return err
 	}
 
-	pI.currentPage = nextPage
+	page, err := convertToPage(resp)
+	if err != nil {
+		return err
+	}
+
+	pI.currentPage = page
 	return nil
 }
 
-func (pI *PageIterator) getNextPage() (*PageResult, error) {
+func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
+	var graphResponse serialization.Parsable
+	var err error
+
 	if pI.currentPage.getNextLink() == nil {
-		return nil, nil
+		return graphResponse, nil
 	}
 
 	nextLink, err := url.Parse(*pI.currentPage.getNextLink())
 	if err != nil {
-		return nil, errors.New("Parsing nextLink url failed")
+		return graphResponse, errors.New("Parsing nextLink url failed")
 	}
 
 	requestInfo := abstractions.NewRequestInformation()
@@ -140,20 +139,16 @@ func (pI *PageIterator) getNextPage() (*PageResult, error) {
 	requestInfo.Headers = pI.headers
 	requestInfo.AddRequestOptions(pI.reqOptions...)
 
-	res, err := pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil)
+	graphResponse, err = pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil)
 	if err != nil {
-		return nil, errors.New("Fetching next page failed")
+		return graphResponse, errors.New("Fetching next page failed")
 	}
 
-	return convertToPage(res)
+	return graphResponse, nil
 }
 
 func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 	keepIterating := true
-
-	if pI.currentPage == nil {
-		return false
-	}
 
 	pageItems := pI.currentPage.getValue()
 	if pageItems == nil {
@@ -181,15 +176,17 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 	return keepIterating
 }
 
-func convertToPage(response interface{}) (*PageResult, error) {
+func convertToPage(response interface{}) (PageResult, error) {
+	var page PageResult
+
 	if response == nil {
-		return nil, errors.New("response cannot be nil")
+		return page, errors.New("response cannot be nil")
 	}
 	ref := reflect.ValueOf(response).Elem()
 
 	value := ref.FieldByName("value")
 	if value.IsNil() {
-		return nil, errors.New("value property missing in response object")
+		return page, errors.New("value property missing in response object")
 	}
 	value = reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
 
@@ -207,8 +204,8 @@ func convertToPage(response interface{}) (*PageResult, error) {
 		collected = append(collected, value.Index(i).Interface())
 	}
 
-	return &PageResult{
-		nextLink: link,
-		value:    collected,
-	}, nil
+	page.nextLink = link
+	page.value = collected
+
+	return page, nil
 }

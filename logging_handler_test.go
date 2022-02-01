@@ -27,7 +27,7 @@ func TestTraceCallbacksGetCalled(t *testing.T) {
 
 	logHandler := NewLoggingHandler(&trace)
 	client := GetDefaultClient(nil, logHandler)
-	client.Get("https://example.com")
+	client.Get(testServer.URL)
 
 	assert.Equal(t, gotConnWasCalled, true)
 }

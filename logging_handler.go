@@ -18,7 +18,7 @@ func NewLoggingHandler(clientTrace *httptrace.ClientTrace) *LoggingHandler {
 		trace: clientTrace,
 	}
 }
-up
+
 func (logger LoggingHandler) Intercept(pipeline khttp.Pipeline, middlewareIndex int, req *http.Request) (*http.Response, error) {
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), logger.trace))
 	return pipeline.Next(req, middlewareIndex)

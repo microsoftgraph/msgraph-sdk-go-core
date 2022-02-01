@@ -8,10 +8,12 @@ import (
 	khttp "github.com/microsoft/kiota/http/go/nethttp"
 )
 
+// LoggingHandler represents a middleware used to print logs about http requests
 type LoggingHandler struct {
 	trace *httptrace.ClientTrace
 }
 
+// NewLoggingHandler creates an instance of the logging handler middleware
 func NewLoggingHandler(clientTrace *httptrace.ClientTrace) *LoggingHandler {
 	return &LoggingHandler{
 		trace: clientTrace,

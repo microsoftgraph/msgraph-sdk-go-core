@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.0.7] - 2021-02-03
+
+### Changed
+
+- Updated references to Kiota packages to fix a [bug where the access token would never be attached to the request](https://github.com/microsoft/kiota/pull/1116). 
+
 ## [0.0.6] - 2021-02-02
 
 ### Added

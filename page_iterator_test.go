@@ -23,15 +23,6 @@ func init() {
 	})
 }
 
-type PageItem struct {
-	DisplayName string
-}
-
-type UserPage struct {
-	Value    []interface{}
-	NextLink *string
-}
-
 var reqAdapter, _ = NewGraphRequestAdapterBase(&authentication.AnonymousAuthenticationProvider{}, GraphClientOptions{
 	GraphServiceVersion:        "",
 	GraphServiceLibraryVersion: "",
@@ -103,7 +94,7 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 	pageIterator, _ := NewPageIterator(graphResponse, *reqAdapter, ParsableCons)
 	res := make([]string, 0)
 
-	pageIterator.Iterate(func(pageItem interface{}) bool {
+	err := pageIterator.Iterate(func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)
 		res = append(res, *item.GetId())
 		return true
@@ -111,6 +102,7 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 
 	// Initial page has 5 items and the next page has 1 item.
 	assert.Equal(t, len(res), 6)
+	assert.Nil(t, err)
 }
 
 func TestIterateCanBePausedAndResumed(t *testing.T) {

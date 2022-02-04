@@ -142,7 +142,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 		item := pageItem.(internal.User)
 		res = append(res, *item.GetId())
 
-		return *item.GetId() != "3"
+		return *item.GetId() != "4"
 	})
 
 	assert.Equal(t, res, []string{"0", "1", "2", "3", "4"})

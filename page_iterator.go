@@ -155,7 +155,8 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 		return false
 	}
 
-	if pI.pauseIndex >= len(pageItems) {
+	// stop iterating if we paused at the last item in the current page and next page is nil
+	if pI.pauseIndex >= len(pageItems) && pI.currentPage.nextLink == nil {
 		return false
 	}
 

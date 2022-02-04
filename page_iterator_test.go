@@ -142,10 +142,10 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 		item := pageItem.(internal.User)
 		res = append(res, *item.GetId())
 
-		return *item.GetId() != "2"
+		return *item.GetId() != "3"
 	})
 
-	assert.Equal(t, res, []string{"0", "1", "2"})
+	assert.Equal(t, res, []string{"0", "1", "2", "3", "4"})
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)
@@ -153,7 +153,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 
 		return true
 	})
-	assert.Equal(t, res2, []string{"3", "4", "10"})
+	assert.Equal(t, res2, []string{"10"})
 }
 
 func buildGraphResponse() *internal.UsersResponse {

@@ -90,12 +90,8 @@ func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) error 
 			return err
 		}
 
-		nextPageHasItems := len(nextPage.getValue()) != 0
 		pI.currentPage = nextPage
-
-		if nextPageHasItems {
-			pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
-		}
+		pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
 	}
 }
 
@@ -166,8 +162,8 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 		return false
 	}
 
-	// stop iterating if we paused at the last item in the current page and next page is nil
-	if pI.pauseIndex >= len(pageItems) && pI.currentPage.nextLink == nil {
+	// the current page has no items to enumerate
+	if pI.currentPage.getValue() == nil {
 		return false
 	}
 

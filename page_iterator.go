@@ -44,7 +44,7 @@ func (p *PageResult) getNextLink() *string {
 	return p.nextLink
 }
 
-// NewpageIterator creates an iterator instance
+// NewPageIterator creates an iterator instance
 //
 // It has three parameters. res is the graph response from the initial request and represents the first page.
 // reqAdapter is used for getting the next page and constructorFunc is used for serializing next page's response to the specified type.
@@ -85,10 +85,12 @@ func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) error 
 			return nil
 		}
 
-		err := pI.next()
+		nextPage, err := pI.next()
 		if err != nil {
 			return err
 		}
+
+		pI.currentPage = nextPage
 		pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
 	}
 }
@@ -105,19 +107,24 @@ func (pI *PageIterator) SetReqOptions(reqOptions []abstractions.RequestOption) {
 	pI.reqOptions = reqOptions
 }
 
-func (pI *PageIterator) next() error {
+func (pI *PageIterator) next() (PageResult, error) {
+	var page PageResult
+
+	if pI.currentPage.getNextLink() == nil {
+		return page, nil
+	}
+
 	resp, err := pI.fetchNextPage()
 	if err != nil {
-		return err
+		return page, err
 	}
 
-	page, err := convertToPage(resp)
+	page, err = convertToPage(resp)
 	if err != nil {
-		return err
+		return page, err
 	}
 
-	pI.currentPage = page
-	return nil
+	return page, nil
 }
 
 func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
@@ -141,7 +148,7 @@ func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
 
 	graphResponse, err = pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil)
 	if err != nil {
-		return graphResponse, errors.New("Fetching next page failed")
+		return graphResponse, errors.New("fetching next page failed")
 	}
 
 	return graphResponse, nil
@@ -155,7 +162,8 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 		return false
 	}
 
-	if pI.pauseIndex >= len(pageItems) {
+	// the current page has no items to enumerate
+	if pI.currentPage.getValue() == nil {
 		return false
 	}
 

@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Fixes a bug where resuming the page iterator wouldn't work
+- Fixes a bug where OData query parameters would be added twice in some cases
+
 ## [0.0.7] - 2021-02-03
 
 ### Changed

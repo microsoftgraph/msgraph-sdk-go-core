@@ -47,7 +47,7 @@ func NewGraphODataQueryHandler() *GraphODataQueryHandler {
 
 // NewGraphODataQueryHandlerWithOptions creates a new instance of GraphODataQueryHandler
 func NewGraphODataQueryHandlerWithOptions(options GraphODataQueryHandlerOptions) *GraphODataQueryHandler {
-	replacementRegexp := "(?i)([^$])(count|deltatoken|expand|filter|format|orderby|search|select|skip|skiptoken|top)="
+	replacementRegexp := "(?i)([^$|$])(count|deltatoken|expand|filter|format|orderby|search|select|skip|skiptoken|top)="
 	return &GraphODataQueryHandler{
 		regex:          regexp.MustCompile(replacementRegexp),
 		handlerOptions: options,

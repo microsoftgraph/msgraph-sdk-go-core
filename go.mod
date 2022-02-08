@@ -4,8 +4,8 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/microsoft/kiota/abstractions/go v0.0.0-20220203083330-462603bf370f
-	github.com/microsoft/kiota/http/go/nethttp v0.0.0-20220203083330-462603bf370f
+	github.com/microsoft/kiota/abstractions/go v0.0.0-20220208140201-eb59c2593f0e
+	github.com/microsoft/kiota/http/go/nethttp v0.0.0-20220208140201-eb59c2593f0e
 	github.com/stretchr/testify v1.7.0
 )
 

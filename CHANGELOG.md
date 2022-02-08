@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.0.8] - 2021-02-08
+
+### Added
+
+- Added support for request body compression (gzip)
+- Added support for response body decompression (gzip)
+
+### Changed
+
 - Fixes a bug where resuming the page iterator wouldn't work
 - Fixes a bug where OData query parameters would be added twice in some cases
 

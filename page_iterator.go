@@ -15,12 +15,10 @@ type PageIterator struct {
 	currentPage     PageResult
 	reqAdapter      GraphRequestAdapterBase
 	pauseIndex      int
-	constructorFunc ParsableConstructor
+	constructorFunc serialization.ParsableFactory
 	headers         map[string]string
 	reqOptions      []abstractions.RequestOption
 }
-
-type ParsableConstructor func() serialization.Parsable
 
 // PageResult represents a page object built from a graph response object
 type PageResult struct {
@@ -48,7 +46,7 @@ func (p *PageResult) getNextLink() *string {
 //
 // It has three parameters. res is the graph response from the initial request and represents the first page.
 // reqAdapter is used for getting the next page and constructorFunc is used for serializing next page's response to the specified type.
-func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc ParsableConstructor) (*PageIterator, error) {
+func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc serialization.ParsableFactory) (*PageIterator, error) {
 	page, err := convertToPage(res)
 	if err != nil {
 		return nil, err
@@ -70,7 +68,7 @@ func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constr
 // return false from the callback.
 //
 // Example
-//      pageIterator, err := NewPageIterator(resp, reqAdapter, parsableCons)
+//      pageIterator, err := NewPageIterator(resp, reqAdapter, parsableFactory)
 //      callbackFunc := func (pageItem interface{}) bool {
 //          fmt.Println(pageitem.GetDisplayName())
 //          return true
@@ -146,7 +144,7 @@ func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
 	requestInfo.Headers = pI.headers
 	requestInfo.AddRequestOptions(pI.reqOptions...)
 
-	graphResponse, err = pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil)
+	graphResponse, err = pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil, nil)
 	if err != nil {
 		return graphResponse, errors.New("fetching next page failed")
 	}

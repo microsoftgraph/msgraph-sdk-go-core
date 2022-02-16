@@ -61,5 +61,5 @@ func TestItDoesNotReplaceWithLocalQueryOptions(t *testing.T) {
 	absRequest.AddRequestOptions(&GraphODataQueryHandlerOptions{
 		ShouldReplace: func(*nethttp.Request) bool { return false },
 	})
-	requestAdapter.SendNoContentAsync(*absRequest, nil)
+	requestAdapter.SendNoContentAsync(*absRequest, nil, nil)
 }

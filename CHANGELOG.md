@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.0.9] - 2021-02-16
+
+### Added
+
+- Added support for deserializing error responses (will return error)
+
+### Changed
+
+- Fixed a bug where response body compression would send empty bodies
+
 ## [0.0.8] - 2021-02-08
 
 ### Added

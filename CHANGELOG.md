@@ -11,7 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-## [0.0.9] - 2021-02-16
+## [0.0.10] - 2022-02-28
+
+### Changed
+
+- Fixed a bug where http client configuration would impact the default client configuration for other usages.
+
+## [0.0.9] - 2022-02-16
 
 ### Added
 
@@ -21,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed a bug where response body compression would send empty bodies
 
-## [0.0.8] - 2021-02-08
+## [0.0.8] - 2022-02-08
 
 ### Added
 
@@ -33,13 +39,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixes a bug where resuming the page iterator wouldn't work
 - Fixes a bug where OData query parameters would be added twice in some cases
 
-## [0.0.7] - 2021-02-03
+## [0.0.7] - 2022-02-03
 
 ### Changed
 
 - Updated references to Kiota packages to fix a [bug where the access token would never be attached to the request](https://github.com/microsoft/kiota/pull/1116). 
 
-## [0.0.6] - 2021-02-02
+## [0.0.6] - 2022-02-02
 
 ### Added
 

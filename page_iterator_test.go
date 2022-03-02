@@ -28,8 +28,8 @@ var reqAdapter, _ = NewGraphRequestAdapterBase(&authentication.AnonymousAuthenti
 	GraphServiceLibraryVersion: "",
 })
 
-func ParsableCons() serialization.Parsable {
-	return internal.NewUsersResponse()
+func ParsableCons(pn serialization.ParseNode) (serialization.Parsable, error) {
+	return internal.NewUsersResponse(), nil
 }
 
 func TestConstructorWithInvalidGraphResponse(t *testing.T) {

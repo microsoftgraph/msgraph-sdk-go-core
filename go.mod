@@ -4,12 +4,11 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/microsoft/kiota/abstractions/go v0.0.0-20220228172739-49f23b2c1c13
-	github.com/microsoft/kiota/http/go/nethttp v0.0.0-20220228172739-49f23b2c1c13
+	github.com/microsoft/kiota/abstractions/go v0.0.0-20220302130347-cdc29c56ac9f
+	github.com/microsoft/kiota/http/go/nethttp v0.0.0-20220302130347-cdc29c56ac9f
+	github.com/microsoft/kiota/serialization/go/json v0.0.0-20220302130347-cdc29c56ac9f
 	github.com/stretchr/testify v1.7.0
 )
-
-require github.com/microsoft/kiota/serialization/go/json v0.0.0-20220202150655-0505f19ca2d1
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.21.0 // indirect

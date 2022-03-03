@@ -11,13 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-## [0.12.0] - 2022-03-03
+## [0.0.12] - 2022-03-03
 
 ### Changed
 
 - Breaking: updates kiota dependencies to pass request information by reference and not by copy (request adapter, authentication provider).
 
-## [0.11.0] - 2022-03-02
+## [0.0.11] - 2022-03-02
 
 ### Changed
 

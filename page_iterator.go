@@ -135,7 +135,7 @@ func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
 
 	nextLink, err := url.Parse(*pI.currentPage.getNextLink())
 	if err != nil {
-		return graphResponse, errors.New("Parsing nextLink url failed")
+		return graphResponse, errors.New("parsing nextLink url failed")
 	}
 
 	requestInfo := abstractions.NewRequestInformation()
@@ -144,7 +144,7 @@ func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
 	requestInfo.Headers = pI.headers
 	requestInfo.AddRequestOptions(pI.reqOptions...)
 
-	graphResponse, err = pI.reqAdapter.SendAsync(*requestInfo, pI.constructorFunc, nil, nil)
+	graphResponse, err = pI.reqAdapter.SendAsync(requestInfo, pI.constructorFunc, nil, nil)
 	if err != nil {
 		return graphResponse, errors.New("fetching next page failed")
 	}

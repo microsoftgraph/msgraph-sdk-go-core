@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.0.14] - 2022-03-11
+
+### Changed
+
+- Publishes a version retraction for v0.11.0 that was wrongfully published and causes issues during upgrades
+
 ## [0.0.13] - 2022-03-04
 
 ### Changed

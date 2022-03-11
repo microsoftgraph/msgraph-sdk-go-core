@@ -22,3 +22,10 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+
+retract (
+	v0.11.0
+	// error in version bump, bumped minor instead of patch, causing issues with update commands as long as we don't have a higher version number
+	v0.0.14
+	// contains retraction only
+)

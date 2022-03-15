@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.0.15] - 2022-03-15
+
+### Changed
+
+- Updated references to kiota libraries for new supported types (byte, unit8, ...)
+
 ## [0.0.14] - 2022-03-11
 
 ### Changed

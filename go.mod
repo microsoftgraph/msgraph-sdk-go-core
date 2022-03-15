@@ -4,9 +4,9 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/microsoft/kiota/abstractions/go v0.0.0-20220304192020-9b3bd245842e
-	github.com/microsoft/kiota/http/go/nethttp v0.0.0-20220303111159-de55f78b58f1
-	github.com/microsoft/kiota/serialization/go/json v0.0.0-20220304192020-9b3bd245842e
+	github.com/microsoft/kiota/abstractions/go v0.0.0-20220315140630-e2d45e682974
+	github.com/microsoft/kiota/http/go/nethttp v0.0.0-20220315140630-e2d45e682974
+	github.com/microsoft/kiota/serialization/go/json v0.0.0-20220315140630-e2d45e682974
 	github.com/stretchr/testify v1.7.0
 )
 
@@ -27,5 +27,5 @@ retract (
 	v0.11.0
 	// error in version bump, bumped minor instead of patch, causing issues with update commands as long as we don't have a higher version number
 	v0.0.14
-	// contains retraction only
+// contains retraction only
 )

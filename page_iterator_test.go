@@ -35,7 +35,7 @@ func ParsableCons(pn serialization.ParseNode) (serialization.Parsable, error) {
 func TestConstructorWithInvalidGraphResponse(t *testing.T) {
 	graphResponse := internal.NewUsersResponse()
 
-	_, err := NewPageIterator(graphResponse, *reqAdapter, ParsableCons)
+	_, err := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
 
 	assert.NotNil(t, err)
 }
@@ -58,7 +58,7 @@ func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 
 	}))
 	defer testServer.Close()
-	pageIterator, _ := NewPageIterator(graphResponse, *reqAdapter, ParsableCons)
+	pageIterator, _ := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)
@@ -91,7 +91,7 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 	mockPath := testServer.URL + "/next-page"
 	graphResponse.SetNextLink(&mockPath)
 
-	pageIterator, _ := NewPageIterator(graphResponse, *reqAdapter, ParsableCons)
+	pageIterator, _ := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
 	res := make([]string, 0)
 
 	err := pageIterator.Iterate(func(pageItem interface{}) bool {
@@ -129,7 +129,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 	mockPath := testServer.URL + "/next-page"
 	response.SetNextLink(&mockPath)
 
-	pageIterator, _ := NewPageIterator(response, *reqAdapter, ParsableCons)
+	pageIterator, _ := NewPageIterator(response, reqAdapter, ParsableCons)
 	pageIterator.Iterate(func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)
 		res = append(res, *item.GetId())

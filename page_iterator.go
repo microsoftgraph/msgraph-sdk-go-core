@@ -13,7 +13,7 @@ import (
 // PageIterator represents an iterator object that can be used to get subsequent pages of a collection.
 type PageIterator struct {
 	currentPage     PageResult
-	reqAdapter      GraphRequestAdapterBase
+	reqAdapter      abstractions.RequestAdapter
 	pauseIndex      int
 	constructorFunc serialization.ParsableFactory
 	headers         map[string]string
@@ -46,7 +46,7 @@ func (p *PageResult) getNextLink() *string {
 //
 // It has three parameters. res is the graph response from the initial request and represents the first page.
 // reqAdapter is used for getting the next page and constructorFunc is used for serializing next page's response to the specified type.
-func NewPageIterator(res interface{}, reqAdapter GraphRequestAdapterBase, constructorFunc serialization.ParsableFactory) (*PageIterator, error) {
+func NewPageIterator(res interface{}, reqAdapter abstractions.RequestAdapter, constructorFunc serialization.ParsableFactory) (*PageIterator, error) {
 	page, err := convertToPage(res)
 	if err != nil {
 		return nil, err

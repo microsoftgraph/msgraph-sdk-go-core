@@ -47,6 +47,10 @@ func (p *PageResult) getNextLink() *string {
 // It has three parameters. res is the graph response from the initial request and represents the first page.
 // reqAdapter is used for getting the next page and constructorFunc is used for serializing next page's response to the specified type.
 func NewPageIterator(res interface{}, reqAdapter abstractions.RequestAdapter, constructorFunc serialization.ParsableFactory) (*PageIterator, error) {
+	if reqAdapter == nil {
+		return nil, errors.New("reqAdapter can't be nil")
+	}
+
 	page, err := convertToPage(res)
 	if err != nil {
 		return nil, err

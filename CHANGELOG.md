@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Breaking: updates PageIterator to receive a RequestAdapter interface instead of GraphRequestAdapterBase concrete type
+
 ## [0.0.15] - 2022-03-15
 
 ### Changed

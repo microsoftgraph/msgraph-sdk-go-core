@@ -1,3 +1,3 @@
 package msgraphgocore
 
-var CoreVersion = "0.0.15"
+var CoreVersion = "0.0.16"

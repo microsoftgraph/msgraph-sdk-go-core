@@ -3,8 +3,7 @@
 name: Add PR to project
 on:
   issues:
-    types:
-      - opened
+    types: [opened]
 jobs:
   track_issue:
     runs-on: ubuntu-latest

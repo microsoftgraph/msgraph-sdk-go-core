@@ -1,7 +1,6 @@
 package msgraphgocore
 
 import (
-	"fmt"
 	"net/url"
 	"testing"
 
@@ -19,10 +18,18 @@ func TestJSONBody(t *testing.T) {
 	expected := `{"requests":[{"id":"1","method":"GET","url":"","headers":{"content-type":"application/json"},"body":"{\"username\":\"name\"}","dependsOn":[]}]}`
 	actual, _ := batch.toJson()
 
-	fmt.Println(string(actual))
 	assert.Equal(t, expected, string(actual))
 }
-func TestDependsOnRelationship(t *testing.T) {}
+func TestDependsOnRelationship(t *testing.T) {
+	reqInfo := getRequestInfo()
+
+	batch := NewBatchRequest()
+	item1, _ := batch.appendItem(*reqInfo)
+	item2, _ := batch.appendItem(*reqInfo)
+	item2.dependsOn(*item1)
+
+	assert.Equal(t, item2.DependsOn[0], item1.Id)
+}
 
 func getRequestInfo() *abstractions.RequestInformation {
 	content := `{"username":"name"}`

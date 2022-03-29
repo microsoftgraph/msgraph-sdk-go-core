@@ -32,7 +32,7 @@ func newBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, erro
 		Body:      string(requestInfo.Content),
 		Headers:   requestInfo.Headers,
 		Url:       url.Path,
-		DependsOn: []string{},
+		DependsOn: make([]string, 1),
 	}, nil
 }
 

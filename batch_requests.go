@@ -41,17 +41,17 @@ func (b *batchItem) dependsOn(item batchItem) {
 	b.DependsOn[0] = item.Id
 }
 
-type BatchRequest struct {
+type batchRequest struct {
 	Requests []*batchItem `json:"requests"`
 }
 
-func NewBatchRequest() *BatchRequest {
-	return &BatchRequest{}
+func NewBatchRequest() *batchRequest {
+	return &batchRequest{}
 }
 
-func (r *BatchRequest) appendItem(req abstractions.RequestInformation) (*batchItem, error) {
+func (r *batchRequest) appendItem(req abstractions.RequestInformation) (*batchItem, error) {
 	if len(r.Requests) > 20 {
-		return nil, errors.New("Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
+		return nil, errors.New("batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
 
 	batchItem, err := newBatchItem(req)
@@ -63,11 +63,11 @@ func (r *BatchRequest) appendItem(req abstractions.RequestInformation) (*batchIt
 	return batchItem, nil
 }
 
-func (r BatchRequest) toJson() ([]byte, error) {
+func (r batchRequest) toJson() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-func SendBatch(client http.Client, batch BatchRequest) (string, error) {
+func SendBatch(client http.Client, batch batchRequest) (string, error) {
 	var result string
 
 	jsonBody, err := batch.toJson()

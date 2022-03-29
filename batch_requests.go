@@ -11,46 +11,45 @@ import (
 	abstractions "github.com/microsoft/kiota/abstractions/go"
 )
 
-type BatchItem struct {
-	Id        string
-	Method    abstractions.HttpMethod
-	Body      []byte
-	Headers   map[string]string
-	Url       string
-	DependsOn []string
+type batchItem struct {
+	Id        string            `json:"id"`
+	Method    string            `json:"method"`
+	Url       string            `json:"url"`
+	Headers   map[string]string `json:"headers"`
+	Body      string            `json:"body"`
+	DependsOn []string          `json:"dependsOn"`
 }
 
-func newBatchItem(requestInfo abstractions.RequestInformation) (*BatchItem, error) {
+func newBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, error) {
 	url, err := requestInfo.GetUri()
 	if err != nil {
 		return nil, err
 	}
 
-	return &BatchItem{
-		Id:      uuid.NewString(),
-		Method:  requestInfo.Method,
-		Body:    requestInfo.Content,
-		Headers: requestInfo.Headers,
-		Url:     url.String(),
+	return &batchItem{
+		Id:        uuid.NewString(),
+		Method:    requestInfo.Method.String(),
+		Body:      string(requestInfo.Content),
+		Headers:   requestInfo.Headers,
+		Url:       url.Path,
+		DependsOn: []string{},
 	}, nil
 }
 
-func (b *BatchItem) dependsOn(item BatchItem) {
+func (b *batchItem) dependsOn(item batchItem) {
 	// DependsOn is a single value slice.
 	b.DependsOn[0] = item.Id
 }
 
 type BatchRequest struct {
-	Requests []BatchItem
+	Requests []*batchItem `json:"requests"`
 }
 
-func NewBatchRequest(requestItems []BatchItem) *BatchRequest {
-	return &BatchRequest{
-		Requests: requestItems,
-	}
+func NewBatchRequest() *BatchRequest {
+	return &BatchRequest{}
 }
 
-func (r *BatchRequest) appendItem(req abstractions.RequestInformation) (*BatchItem, error) {
+func (r *BatchRequest) appendItem(req abstractions.RequestInformation) (*batchItem, error) {
 	if len(r.Requests) > 20 {
 		return nil, errors.New("Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
@@ -60,7 +59,7 @@ func (r *BatchRequest) appendItem(req abstractions.RequestInformation) (*BatchIt
 		return nil, err
 	}
 
-	r.Requests = append(r.Requests, *batchItem)
+	r.Requests = append(r.Requests, batchItem)
 	return batchItem, nil
 }
 

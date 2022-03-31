@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.20.0] - 2022-03-31
+
+### Changed
+
+- Updated reference to kiota libraries that were moved to their own repository.
+
 ## [0.0.17] - 2022-03-30
 
 ### Added

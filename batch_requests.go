@@ -80,12 +80,13 @@ func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (string,
 	ur := "https://graph.microsoft.com/v1.0/$batch"
 	uri, err := url.Parse(ur)
 
-	fmt.Println(string(jsonBody))
-
 	requestInfo := abstractions.NewRequestInformation()
 	requestInfo.SetStreamContent(jsonBody)
 	requestInfo.Method = abstractions.POST
 	requestInfo.SetUri(*uri)
+	requestInfo.Headers = map[string]string{
+		"Content-Type": "application/json",
+	}
 
 	res, err := adapter.SendAsync(requestInfo, nil, nil, nil)
 	if err != nil {

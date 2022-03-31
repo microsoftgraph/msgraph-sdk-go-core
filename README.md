@@ -85,7 +85,7 @@ After you have a **GraphRequestAdapterBase** that is authenticated, you can begi
 To retrieve the user's details
 
 ```Golang
-import abs "github.com/microsoft/kiota/abstractions/go"
+import abs "github.com/microsoft/kiota-abstractions-go"
 
 requestInf := abs.NewRequestInformation()
 targetUrl, err := url.Parse("https://graph.microsoft.com/v1.0/me")

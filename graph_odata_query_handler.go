@@ -4,8 +4,8 @@ import (
 	nethttp "net/http"
 	regexp "regexp"
 
-	abs "github.com/microsoft/kiota/abstractions/go"
-	khttp "github.com/microsoft/kiota/http/go/nethttp"
+	abs "github.com/microsoft/kiota-abstractions-go"
+	khttp "github.com/microsoft/kiota-http-go"
 )
 
 // GraphODataQueryHandler is a handler that adds the dollar sign in front of OData query parameters

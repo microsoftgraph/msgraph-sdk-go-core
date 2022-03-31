@@ -6,7 +6,7 @@ import (
 	runtime "runtime"
 
 	uuid "github.com/google/uuid"
-	khttp "github.com/microsoft/kiota/http/go/nethttp"
+	khttp "github.com/microsoft/kiota-http-go"
 )
 
 // GraphTelemetryHandler is a middleware handler that adds telemetry headers to requests.

@@ -4,9 +4,10 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/microsoft/kiota/abstractions/go v0.0.0-20220330110227-7f4413692066
-	github.com/microsoft/kiota/http/go/nethttp v0.0.0-20220330121053-438918ae1684
-	github.com/microsoft/kiota/serialization/go/json v0.0.0-20220321065327-ff9526eda23e
+	github.com/microsoft/kiota-abstractions-go v0.1.0
+	github.com/microsoft/kiota-http-go v0.1.0
+	github.com/microsoft/kiota-serialization-json-go v0.1.0
+	github.com/microsoft/kiota-serialization-text-go v0.1.0
 	github.com/stretchr/testify v1.7.1
 )
 

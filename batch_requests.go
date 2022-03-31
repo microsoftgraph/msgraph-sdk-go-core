@@ -1,23 +1,22 @@
 package msgraphgocore
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
-	"net/http"
+	"fmt"
+	"net/url"
 
 	"github.com/google/uuid"
 	abstractions "github.com/microsoft/kiota/abstractions/go"
 )
 
 type batchItem struct {
-	Id        string            `json:"id"`
-	Method    string            `json:"method"`
-	Url       string            `json:"url"`
-	Headers   map[string]string `json:"headers"`
-	Body      string            `json:"body"`
-	DependsOn []string          `json:"dependsOn"`
+	Id        string                 `json:"id"`
+	Method    string                 `json:"method"`
+	Url       string                 `json:"url"`
+	Headers   map[string]string      `json:"headers"`
+	Body      map[string]interface{} `json:"body"`
+	DependsOn []string               `json:"dependsOn"`
 }
 
 func newBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, error) {
@@ -26,19 +25,22 @@ func newBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, erro
 		return nil, err
 	}
 
+	var b map[string]interface{}
+	json.Unmarshal(requestInfo.Content, &b)
+
 	return &batchItem{
 		Id:        uuid.NewString(),
 		Method:    requestInfo.Method.String(),
-		Body:      string(requestInfo.Content),
+		Body:      b,
 		Headers:   requestInfo.Headers,
 		Url:       url.Path,
-		DependsOn: make([]string, 1),
+		DependsOn: make([]string, 0),
 	}, nil
 }
 
-func (b *batchItem) dependsOn(item batchItem) {
+func (b *batchItem) DependsOnItem(item batchItem) {
 	// DependsOn is a single value slice.
-	b.DependsOn[0] = item.Id
+	b.DependsOn = []string{item.Id}
 }
 
 type batchRequest struct {
@@ -49,7 +51,7 @@ func NewBatchRequest() *batchRequest {
 	return &batchRequest{}
 }
 
-func (r *batchRequest) appendItem(req abstractions.RequestInformation) (*batchItem, error) {
+func (r *batchRequest) AppendItem(req abstractions.RequestInformation) (*batchItem, error) {
 	if len(r.Requests) > 20 {
 		return nil, errors.New("batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
@@ -67,7 +69,7 @@ func (r batchRequest) toJson() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-func SendBatch(client http.Client, batch batchRequest) (string, error) {
+func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (string, error) {
 	var result string
 
 	jsonBody, err := batch.toJson()
@@ -75,20 +77,22 @@ func SendBatch(client http.Client, batch batchRequest) (string, error) {
 		return result, err
 	}
 
-	res, err := client.Post(
-		"https://graph.microsoft.com/v1.0/$batch",
-		"application/json",
-		bytes.NewReader(jsonBody),
-	)
+	ur := "https://graph.microsoft.com/v1.0/$batch"
+	uri, err := url.Parse(ur)
+
+	fmt.Println(string(jsonBody))
+
+	requestInfo := abstractions.NewRequestInformation()
+	requestInfo.SetStreamContent(jsonBody)
+	requestInfo.Method = abstractions.POST
+	requestInfo.SetUri(*uri)
+
+	res, err := adapter.SendAsync(requestInfo, nil, nil, nil)
 	if err != nil {
+		fmt.Println(err)
 		return result, err
 	}
 
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		return result, err
-	}
-
-	json.Unmarshal(b, &result)
+	fmt.Println(res)
 	return result, nil
 }

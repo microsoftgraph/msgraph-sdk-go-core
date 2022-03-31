@@ -12,21 +12,20 @@ func TestJSONBody(t *testing.T) {
 	reqInfo := getRequestInfo()
 
 	batch := NewBatchRequest()
-	item, _ := batch.appendItem(*reqInfo)
+	item, _ := batch.AppendItem(*reqInfo)
 	item.Id = "1"
 
-	expected := `{"requests":[{"id":"1","method":"GET","url":"","headers":{"content-type":"application/json"},"body":"{\"username\":\"name\"}","dependsOn":[]}]}`
+	expected := `{"requests":[{"id":"1","method":"GET","url":"","headers":{"content-type":"application/json"},"body":{"username":"name"},"dependsOn":[]}]}`
 	actual, _ := batch.toJson()
-
 	assert.Equal(t, expected, string(actual))
 }
 func TestDependsOnRelationship(t *testing.T) {
 	reqInfo := getRequestInfo()
 
 	batch := NewBatchRequest()
-	item1, _ := batch.appendItem(*reqInfo)
-	item2, _ := batch.appendItem(*reqInfo)
-	item2.dependsOn(*item1)
+	item1, _ := batch.AppendItem(*reqInfo)
+	item2, _ := batch.AppendItem(*reqInfo)
+	item2.DependsOnItem(*item1)
 
 	assert.Equal(t, item2.DependsOn[0], item1.Id)
 }

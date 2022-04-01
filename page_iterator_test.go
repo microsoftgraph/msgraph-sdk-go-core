@@ -6,10 +6,10 @@ import (
 	httptest "net/http/httptest"
 	testing "testing"
 
-	abstractions "github.com/microsoft/kiota/abstractions/go"
-	"github.com/microsoft/kiota/abstractions/go/authentication"
-	"github.com/microsoft/kiota/abstractions/go/serialization"
-	jsonserialization "github.com/microsoft/kiota/serialization/go/json"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+	"github.com/microsoft/kiota-abstractions-go/authentication"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
+	jsonserialization "github.com/microsoft/kiota-serialization-json-go"
 	"github.com/microsoftgraph/msgraph-sdk-go-core/internal"
 	"github.com/stretchr/testify/assert"
 )

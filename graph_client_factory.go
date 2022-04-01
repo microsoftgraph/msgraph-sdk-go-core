@@ -3,7 +3,7 @@ package msgraphgocore
 import (
 	nethttp "net/http"
 
-	khttp "github.com/microsoft/kiota/http/go/nethttp"
+	khttp "github.com/microsoft/kiota-http-go"
 )
 
 // GetDefaultMiddlewaresWithOptions creates a default slice of middleware for the Graph Client.

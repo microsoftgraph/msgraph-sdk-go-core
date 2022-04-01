@@ -7,8 +7,8 @@ import (
 	"strings"
 	testing "testing"
 
-	abs "github.com/microsoft/kiota/abstractions/go"
-	absauth "github.com/microsoft/kiota/abstractions/go/authentication"
+	abs "github.com/microsoft/kiota-abstractions-go"
+	absauth "github.com/microsoft/kiota-abstractions-go/authentication"
 	assert "github.com/stretchr/testify/assert"
 )
 

@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"unsafe"
 
-	abstractions "github.com/microsoft/kiota/abstractions/go"
-	"github.com/microsoft/kiota/abstractions/go/serialization"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // PageIterator represents an iterator object that can be used to get subsequent pages of a collection.

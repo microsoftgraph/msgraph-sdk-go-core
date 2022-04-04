@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	abstractions "github.com/microsoft/kiota/abstractions/go"
+	"github.com/microsoft/kiota/abstractions/go/serialization"
 )
 
 type batchItem struct {
@@ -69,8 +70,20 @@ func (r batchRequest) toJson() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (string, error) {
-	var result string
+func (r *BatchResponse) GetResponses() []BatchItem {
+	return r.Responses
+}
+
+type BResponse interface {
+	GetResponses() map[string]interface{}
+}
+
+func BatchResponseFactory(parseNode serialization.ParseNode) (serialization.Parsable, error) {
+	return NewBatchResponse(), nil
+}
+
+func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (serialization.Parsable, error) {
+	var result serialization.Parsable
 
 	jsonBody, err := batch.toJson()
 	if err != nil {
@@ -88,12 +101,11 @@ func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (string,
 		"Content-Type": "application/json",
 	}
 
-	res, err := adapter.SendAsync(requestInfo, nil, nil, nil)
+	result, err = adapter.SendAsync(requestInfo, BatchResponseFactory, nil, nil)
 	if err != nil {
-		fmt.Println(err)
 		return result, err
 	}
-
-	fmt.Println(res)
+	r := result.(*BatchResponse)
+	fmt.Println(r.Responses[0].GetId())
 	return result, nil
 }

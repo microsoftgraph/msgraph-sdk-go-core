@@ -105,7 +105,11 @@ func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (seriali
 	if err != nil {
 		return result, err
 	}
-	r := result.(*BatchResponse)
-	fmt.Println(r.Responses[0].GetId())
+
+	resp := result.(*BatchResponse)
+	for i := 0; i < len(resp.Responses); i++ {
+		fmt.Println(*resp.Responses[i].GetStatus(), *resp.Responses[i].GetId())
+	}
+
 	return result, nil
 }

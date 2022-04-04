@@ -116,7 +116,7 @@ func (r *BatchResponse) Serialize(writer serialization.SerializationWriter) erro
 
 type BatchItem interface {
 	GetBody() *string
-	GetStatus() *int
+	GetStatus() *int32
 	GetHeaders() *string
 	GetId() *string
 }

@@ -3,7 +3,6 @@ package msgraphgocore
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/url"
 
 	"github.com/google/uuid"
@@ -26,13 +25,13 @@ func newBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, erro
 		return nil, err
 	}
 
-	var b map[string]interface{}
-	json.Unmarshal(requestInfo.Content, &b)
+	var body map[string]interface{}
+	json.Unmarshal(requestInfo.Content, &body)
 
 	return &batchItem{
 		Id:        uuid.NewString(),
 		Method:    requestInfo.Method.String(),
-		Body:      b,
+		Body:      body,
 		Headers:   requestInfo.Headers,
 		Url:       url.Path,
 		DependsOn: make([]string, 0),
@@ -82,34 +81,31 @@ func BatchResponseFactory(parseNode serialization.ParseNode) (serialization.Pars
 	return NewBatchResponse(), nil
 }
 
-func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (serialization.Parsable, error) {
-	var result serialization.Parsable
+func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (*BatchResponse, error) {
+	var result *BatchResponse
 
 	jsonBody, err := batch.toJson()
 	if err != nil {
 		return result, err
 	}
 
-	ur := "https://graph.microsoft.com/v1.0/$batch"
-	uri, err := url.Parse(ur)
+	baseUrl, err := url.Parse(adapter.GetBaseUrl())
+	if err != nil {
+		return nil, err
+	}
 
 	requestInfo := abstractions.NewRequestInformation()
 	requestInfo.SetStreamContent(jsonBody)
 	requestInfo.Method = abstractions.POST
-	requestInfo.SetUri(*uri)
+	requestInfo.SetUri(*baseUrl)
 	requestInfo.Headers = map[string]string{
 		"Content-Type": "application/json",
 	}
 
-	result, err = adapter.SendAsync(requestInfo, BatchResponseFactory, nil, nil)
+	res, err := adapter.SendAsync(requestInfo, BatchResponseFactory, nil, nil)
 	if err != nil {
 		return result, err
 	}
 
-	resp := result.(*BatchResponse)
-	for i := 0; i < len(resp.Responses); i++ {
-		fmt.Println(*resp.Responses[i].GetStatus(), *resp.Responses[i].GetId())
-	}
-
-	return result, nil
+	return res.(*BatchResponse), nil
 }

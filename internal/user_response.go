@@ -49,9 +49,9 @@ func (m *UsersResponse) GetValue() []User {
 }
 
 // GetFieldDeserializers the deserialization information for the current model
-func (m *UsersResponse) GetFieldDeserializers() map[string]func(interface{}, i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
-	res := make(map[string]func(interface{}, i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error)
-	res["@odata.nextLink"] = func(o interface{}, n i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
+func (m *UsersResponse) GetFieldDeserializers() map[string]func(i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
+	res := make(map[string]func(i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error)
+	res["@odata.nextLink"] = func(n i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
 		val, err := n.GetStringValue()
 		if err != nil {
 			return err
@@ -61,7 +61,7 @@ func (m *UsersResponse) GetFieldDeserializers() map[string]func(interface{}, i04
 		}
 		return nil
 	}
-	res["value"] = func(o interface{}, n i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
+	res["value"] = func(n i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
 		val, err := n.GetCollectionOfObjectValues(func(pn i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) (i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.Parsable, error) {
 			return NewUser(), nil
 		})

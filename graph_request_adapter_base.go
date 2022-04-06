@@ -4,9 +4,9 @@ import (
 	"errors"
 	nethttp "net/http"
 
-	absauth "github.com/microsoft/kiota/abstractions/go/authentication"
-	absser "github.com/microsoft/kiota/abstractions/go/serialization"
-	khttp "github.com/microsoft/kiota/http/go/nethttp"
+	absauth "github.com/microsoft/kiota-abstractions-go/authentication"
+	absser "github.com/microsoft/kiota-abstractions-go/serialization"
+	khttp "github.com/microsoft/kiota-http-go"
 )
 
 // GraphRequestAdapterBase is the core service used by GraphServiceClient to make requests to Microsoft Graph.

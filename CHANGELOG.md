@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.21.0] - 2022-04-06
+
+### Changed
+
+- Updated reference to kiota libraries for deserialization simplification.
+
 ## [0.20.0] - 2022-03-31
 
 ### Changed

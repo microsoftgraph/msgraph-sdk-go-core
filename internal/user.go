@@ -47,9 +47,9 @@ func (m *DirectoryObject) GetDeletedDateTime() *i336074805fc853987abe6f7fe3ad97a
 }
 
 // GetFieldDeserializers the deserialization information for the current model
-func (m *DirectoryObject) GetFieldDeserializers() map[string]func(interface{}, i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
+func (m *DirectoryObject) GetFieldDeserializers() map[string]func(i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
 	res := m.Entity.GetFieldDeserializers()
-	res["deletedDateTime"] = func(o interface{}, n i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
+	res["deletedDateTime"] = func(n i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
 		val, err := n.GetTimeValue()
 		if err != nil {
 			return err
@@ -121,9 +121,9 @@ func (m *Entity) GetId() *string {
 }
 
 // GetFieldDeserializers the deserialization information for the current model
-func (m *Entity) GetFieldDeserializers() map[string]func(interface{}, i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
-	res := make(map[string]func(interface{}, i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error)
-	res["id"] = func(o interface{}, n i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
+func (m *Entity) GetFieldDeserializers() map[string]func(i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
+	res := make(map[string]func(i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error)
+	res["id"] = func(n i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.ParseNode) error {
 		val, err := n.GetStringValue()
 		if err != nil {
 			return err

@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.22.0] - 2022-04-12
+
+### Changed
+
+- Updated references to kiota libraries for special character in parameter names support.
+- Breaking: removed the odata parameter names handler.
+
 ## [0.21.0] - 2022-04-06
 
 ### Changed

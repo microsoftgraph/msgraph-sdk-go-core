@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.22.1] - 2022-04-14
+
+### Changed
+
+- Fixed an issue with date serialization in JSON.
+
 ## [0.22.0] - 2022-04-12
 
 ### Changed

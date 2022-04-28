@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/microsoft/kiota-abstractions-go v0.4.0
+	github.com/microsoft/kiota-abstractions-go v0.5.0
 	github.com/microsoft/kiota-http-go v0.3.0
 	github.com/microsoft/kiota-serialization-json-go v0.3.0
 	github.com/stretchr/testify v1.7.1

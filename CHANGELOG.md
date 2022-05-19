@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.25.0] - 2022-05-19
+
+### Changed
+
+- Upgraded kiota dependencies for preliminary continuous access evaluation support.
+
 ## [0.24.0] - 2022-04-28
 
 ### Changed

@@ -6,8 +6,8 @@ import (
 	"net/url"
 
 	"github.com/google/uuid"
-	abstractions "github.com/microsoft/kiota/abstractions/go"
-	"github.com/microsoft/kiota/abstractions/go/serialization"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 type batchItem struct {

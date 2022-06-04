@@ -1,6 +1,10 @@
 package msgraphgocore
 
-import "github.com/microsoft/kiota/abstractions/go/serialization"
+import (
+	"fmt"
+
+	"github.com/microsoft/kiota-abstractions-go/serialization"
+)
 
 type BatchResponse struct {
 	Responses []BatchItem
@@ -33,9 +37,9 @@ func (r *BatchItemResponse) GetStatus() *int32 {
 	return r.Status
 }
 
-func (r *BatchItemResponse) GetFieldDeserializers() map[string]func(interface{}, serialization.ParseNode) error {
-	res := make(map[string]func(interface{}, serialization.ParseNode) error)
-	res["id"] = func(o interface{}, n serialization.ParseNode) error {
+func (r *BatchItemResponse) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	res := make(map[string]func(serialization.ParseNode) error)
+	res["id"] = func(n serialization.ParseNode) error {
 		val, err := n.GetStringValue()
 		if err != nil {
 			return err
@@ -46,7 +50,7 @@ func (r *BatchItemResponse) GetFieldDeserializers() map[string]func(interface{},
 		return nil
 	}
 
-	res["status"] = func(o interface{}, n serialization.ParseNode) error {
+	res["status"] = func(n serialization.ParseNode) error {
 		val, err := n.GetInt32Value()
 		if err != nil {
 			return err
@@ -57,18 +61,21 @@ func (r *BatchItemResponse) GetFieldDeserializers() map[string]func(interface{},
 		return nil
 	}
 
-	res["body"] = func(o interface{}, n serialization.ParseNode) error {
-		// val, err := n.GetStringValue()
-		// if err != nil {
-		// 	return err
-		// }
-		// if val != nil {
-		// 	r.Body = val
-		// }
+	res["body"] = func(n serialization.ParseNode) error {
+		val, _ := n.GetStringValue()
+		fmt.Println(string(*val))
+		fmt.Println("-----")
+		val, err := n.GetStringValue()
+		if err != nil {
+			return err
+		}
+		if val != nil {
+			r.Body = val
+		}
 		return nil
 	}
 
-	res["headers"] = func(o interface{}, n serialization.ParseNode) error {
+	res["headers"] = func(n serialization.ParseNode) error {
 		// val, err := n.GetStringValue()
 		// if err != nil {
 		// 	return err
@@ -89,9 +96,9 @@ func CreateBatchItem(constructor serialization.ParseNode) (serialization.Parsabl
 	return &BatchItemResponse{}, nil
 }
 
-func (r *BatchResponse) GetFieldDeserializers() map[string]func(interface{}, serialization.ParseNode) error {
-	res := make(map[string]func(interface{}, serialization.ParseNode) error)
-	res["responses"] = func(o interface{}, n serialization.ParseNode) error {
+func (r *BatchResponse) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	res := make(map[string]func(serialization.ParseNode) error)
+	res["responses"] = func(n serialization.ParseNode) error {
 		val, err := n.GetCollectionOfObjectValues(CreateBatchItem)
 		if err != nil {
 			return err

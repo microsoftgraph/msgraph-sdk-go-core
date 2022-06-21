@@ -7,7 +7,7 @@ require (
 	github.com/microsoft/kiota-abstractions-go v0.8.1
 	github.com/microsoft/kiota-http-go v0.5.1
 	github.com/microsoft/kiota-serialization-json-go v0.5.2
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.7.4
 )
 
 require (

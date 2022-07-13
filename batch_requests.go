@@ -3,6 +3,9 @@ package msgraphgocore
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 
 	"github.com/google/uuid"
@@ -81,17 +84,21 @@ func BatchResponseFactory(parseNode serialization.ParseNode) (serialization.Pars
 	return NewBatchResponse(), nil
 }
 
-func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (*BatchResponse, error) {
-	var result *BatchResponse
+type BR struct {
+	Responses []BatchItemResponse
+}
+
+func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (BR, error) {
+	var res BR
 
 	jsonBody, err := batch.toJson()
 	if err != nil {
-		return result, err
+		return res, err
 	}
 
 	baseUrl, err := url.Parse(adapter.GetBaseUrl())
 	if err != nil {
-		return nil, err
+		return res, err
 	}
 
 	requestInfo := abstractions.NewRequestInformation()
@@ -102,10 +109,21 @@ func SendBatch(adapter abstractions.RequestAdapter, batch batchRequest) (*BatchR
 		"Content-Type": "application/json",
 	}
 
-	res, err := adapter.SendAsync(requestInfo, BatchResponseFactory, nil, nil)
+	adapter.SendAsync(requestInfo, nil, func(response interface{}, errorMappings abstractions.ErrorMappings) (interface{}, error) {
+		resp, _ := response.(*http.Response)
+		body, _ := io.ReadAll(resp.Body)
+		json.Unmarshal(body, &res)
+
+		for _, r := range res.Responses {
+			fmt.Println(r.GetBody())
+		}
+
+		return NewBatchResponse(), nil
+	}, nil)
+
 	if err != nil {
-		return result, err
+		return res, err
 	}
 
-	return res.(*BatchResponse), nil
+	return res, nil
 }

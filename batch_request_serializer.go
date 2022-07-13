@@ -1,8 +1,6 @@
 package msgraphgocore
 
 import (
-	"fmt"
-
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
@@ -13,7 +11,7 @@ type BatchResponse struct {
 type BatchItemResponse struct {
 	Id      *string
 	Status  *int32
-	Body    *string
+	Body    map[string]any
 	Headers *string
 }
 
@@ -21,7 +19,7 @@ func NewBatchResponse() *BatchResponse {
 	return &BatchResponse{make([]BatchItem, 0)}
 }
 
-func (r *BatchItemResponse) GetBody() *string {
+func (r *BatchItemResponse) GetBody() map[string]any {
 	return r.Body
 }
 
@@ -61,17 +59,6 @@ func (r *BatchItemResponse) GetFieldDeserializers() map[string]func(serializatio
 		return nil
 	}
 
-	res["body"] = func(n serialization.ParseNode) error {
-		val, _ := n.GetStringValue()
-		val, err := n.GetStringValue()
-		if err != nil {
-			return err
-		}
-		if val != nil {
-			r.Body = val
-		}
-		return nil
-	}
 
 	res["headers"] = func(n serialization.ParseNode) error {
 		// val, err := n.GetStringValue()
@@ -120,7 +107,7 @@ func (r *BatchResponse) Serialize(writer serialization.SerializationWriter) erro
 }
 
 type BatchItem interface {
-	GetBody() *string
+	GetBody() map[string]any
 	GetStatus() *int32
 	GetHeaders() *string
 	GetId() *string

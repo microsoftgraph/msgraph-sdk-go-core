@@ -11,6 +11,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.26.2] - 2022-06-12
+
+### Changed
+
+- Updated reference to kiota serialization json
+- Updated reference to kiota http
+
+## [0.26.1] - 2022-06-07
+
+### Changed
+
+- Updated references to kiota libraries and yaml dependencies.
+
+## [0.26.0] - 2022-05-27
+
+### Changed
+
+- Updated references to kiota libraries to add support for enum and enum collections responses.
+
+## [0.25.1] - 2022-05-25
+
+### Changed
+
+- Updated kiota http library reference.
+
+## [0.25.0] - 2022-05-19
+
+### Changed
+
+- Upgraded kiota dependencies for preliminary continuous access evaluation support.
+
+## [0.24.0] - 2022-04-28
+
+### Changed
+
+- Updated references to kiota libraries for request configuration revamp
+
+## [0.23.0] - 2022-04-19
+
+### Changed
+
+- Upgraded kiota libraries to address quote in url template issue.
+- Upgraded to go 18.
+
+## [0.22.1] - 2022-04-14
+
+### Changed
+
+- Fixed an issue with date serialization in JSON.
+
+## [0.22.0] - 2022-04-12
+
+### Changed
+
+- Updated references to kiota libraries for special character in parameter names support.
+- Breaking: removed the odata parameter names handler.
+
 ## [0.21.0] - 2022-04-06
 
 ### Changed

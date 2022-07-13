@@ -146,7 +146,7 @@ func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
 	requestInfo.Method = abstractions.GET
 	requestInfo.SetUri(*nextLink)
 	requestInfo.Headers = pI.headers
-	requestInfo.AddRequestOptions(pI.reqOptions...)
+	requestInfo.AddRequestOptions(pI.reqOptions)
 
 	graphResponse, err = pI.reqAdapter.SendAsync(requestInfo, pI.constructorFunc, nil, nil)
 	if err != nil {

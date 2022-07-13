@@ -63,8 +63,6 @@ func (r *BatchItemResponse) GetFieldDeserializers() map[string]func(serializatio
 
 	res["body"] = func(n serialization.ParseNode) error {
 		val, _ := n.GetStringValue()
-		fmt.Println(string(*val))
-		fmt.Println("-----")
 		val, err := n.GetStringValue()
 		if err != nil {
 			return err

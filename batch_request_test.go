@@ -66,6 +66,24 @@ func TestReturnsBatchResponse(t *testing.T) {
 	assert.Equal(t, len(resp.Responses), 4)
 }
 
+func TestHandlesHTTPError(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(403)
+		fmt.Fprint(w, "")
+	}))
+	defer testServer.Close()
+
+	mockPath := testServer.URL + "/$batch"
+	reqAdapter.SetBaseUrl(mockPath)
+
+	reqInfo := getRequestInfo()
+	batch := NewBatchRequest()
+	batch.AppendBatchItem(*reqInfo)
+
+	_, err := SendBatch(*batch, reqAdapter)
+	assert.Equal(t, err.Error(), "Request failed with status: 403")
+}
+
 func getRequestInfo() *abstractions.RequestInformation {
 	content := `
 {

@@ -3,6 +3,7 @@ package msgraphgocore
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -15,7 +16,7 @@ import (
 func SendBatch(batch batchRequest, adapter abstractions.RequestAdapter) (BatchResponse, error) {
 	var res BatchResponse
 
-	jsonBody, err := batch.toJson()
+	batchJsonBody, err := batch.toJson()
 	if weGotAnError(err) {
 		return res, err
 	}
@@ -25,16 +26,12 @@ func SendBatch(batch batchRequest, adapter abstractions.RequestAdapter) (BatchRe
 		return res, err
 	}
 
-	requestInfo := buildRequestInfo(jsonBody, baseUrl)
+	requestInfo := buildRequestInfo(batchJsonBody, baseUrl)
 	return sendBatchRequest(requestInfo, adapter)
 }
 
-func NewBatchRequest() *batchRequest {
-	return &batchRequest{}
-}
-
-func (r *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (*batchItem, error) {
-	if len(r.Requests) > 20 {
+func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (*batchItem, error) {
+	if len(br.Requests) > 19 {
 		return nil, errors.New("batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
 
@@ -43,8 +40,17 @@ func (r *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) 
 		return nil, err
 	}
 
-	r.Requests = append(r.Requests, batchItem)
+	br.Requests = append(br.Requests, batchItem)
 	return batchItem, nil
+}
+
+func (bi *batchItem) DependsOnItem(item batchItem) {
+	// DependsOn is a single value slice
+	bi.DependsOn = []string{item.Id}
+}
+
+func NewBatchRequest() *batchRequest {
+	return &batchRequest{}
 }
 
 func toBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, error) {
@@ -64,11 +70,6 @@ func toBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, error
 		Url:       url.Path,
 		DependsOn: make([]string, 0),
 	}, nil
-}
-
-func (b *batchItem) DependsOnItem(item batchItem) {
-	// DependsOn is a single value slice
-	b.DependsOn = []string{item.Id}
 }
 
 func (r batchRequest) toJson() ([]byte, error) {
@@ -101,6 +102,10 @@ func sendBatchRequest(requestInfo *abstractions.RequestInformation, adapter abst
 		resp, ok := response.(*http.Response)
 		if !ok {
 			return nil, errors.New("Response type assertion failed")
+		}
+
+		if status := resp.StatusCode; status >= 400 && status <= 600 {
+			return res, fmt.Errorf("Request failed with status: %d", status)
 		}
 
 		body, err := io.ReadAll(resp.Body)

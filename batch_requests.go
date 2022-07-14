@@ -13,6 +13,7 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go-core/internal"
 )
 
+// SendBatch sends a batch request
 func SendBatch(batch batchRequest, adapter abstractions.RequestAdapter) (BatchResponse, error) {
 	var res BatchResponse
 
@@ -30,9 +31,12 @@ func SendBatch(batch batchRequest, adapter abstractions.RequestAdapter) (BatchRe
 	return sendBatchRequest(requestInfo, adapter)
 }
 
+// AppendBatchItem converts RequestInformation to a BatchItem and adds it to a BatchRequest
+//
+// You can add upto 20 BatchItems to a BatchRequest
 func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (*batchItem, error) {
 	if len(br.Requests) > 19 {
-		return nil, errors.New("batch items limit exceeded. BatchRequest has a limit of 20 batch items")
+		return nil, errors.New("Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
 
 	batchItem, err := toBatchItem(reqInfo)
@@ -44,11 +48,13 @@ func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation)
 	return batchItem, nil
 }
 
+// DependsOnItem creates a dependency chain between BatchItems.If A depends on B, then B will be sent before B
 func (bi *batchItem) DependsOnItem(item batchItem) {
 	// DependsOn is a single value slice
 	bi.DependsOn = []string{item.Id}
 }
 
+// NewBatchRequest creates an instance of BatchRequest
 func NewBatchRequest() *batchRequest {
 	return &batchRequest{}
 }

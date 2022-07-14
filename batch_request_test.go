@@ -66,6 +66,18 @@ func TestReturnsBatchResponse(t *testing.T) {
 	assert.Equal(t, len(resp.Responses), 4)
 }
 
+func TestRespectsBatchItemLimitOf20BatchItems(t *testing.T) {
+	batch := NewBatchRequest()
+	reqInfo := getRequestInfo()
+
+	for i := 0; i < 20; i++ {
+		batch.AppendBatchItem(*reqInfo)
+	}
+
+	_, err := batch.AppendBatchItem(*reqInfo)
+	assert.Equal(t, err.Error(), "Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
+}
+
 func TestHandlesHTTPError(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(403)

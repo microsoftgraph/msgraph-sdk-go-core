@@ -60,7 +60,7 @@ func TestReturnsBatchResponse(t *testing.T) {
 	batch := NewBatchRequest()
 	batch.AppendBatchItem(*reqInfo)
 
-	resp, err := SendBatch(reqAdapter, *batch)
+	resp, err := SendBatch(*batch, reqAdapter)
 	require.NoError(t, err)
 
 	assert.Equal(t, len(resp.Responses), 4)

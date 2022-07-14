@@ -4,9 +4,12 @@ import (
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
+// NoOpParsable is a dummy type that implements the Parsable interface.
+// Used in SendBatch to by-pass serialization
 type NoOpParsable struct {
 }
 
+// NewNoOpParsable creates an instance of NoOpParsable
 func NewNoOpParsable() *NoOpParsable {
 	return &NoOpParsable{}
 }

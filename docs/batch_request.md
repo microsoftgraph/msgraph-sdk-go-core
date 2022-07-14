@@ -5,11 +5,17 @@ BatchRequest is useful when you want to make multiple requests efficiently. It b
 ## Code Sample
 
 ```go
-reqInfo := abstractions.NewRequestInformation()
+import "github.com/microsoftgraph/msgraph-sdk-go-core"
+import abstractions "github.com/microsoft/kiota-abstractions-go"
+
+reqInfo := client.Me().CreateGetRequestInformation()
 batch := msgraphsdkcore.NewBatchRequest()
 batchItem := batch.AppendBatchItem(*reqInfo)
 
 resp, err := msgraphsdkcore.SendBatch(*batch, reqAdapter)
+
+// print the first response
+fmt.Println(resp.Responses[0].Body)
 ```
 
 ## Depends On Relationship

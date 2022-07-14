@@ -49,6 +49,8 @@ func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation)
 }
 
 // DependsOnItem creates a dependency chain between BatchItems.If A depends on B, then B will be sent before B
+// A batchItem can only depend on one other batchItem
+// see: https://docs.microsoft.com/en-us/graph/known-issues#request-dependencies-are-limited
 func (bi *batchItem) DependsOnItem(item batchItem) {
 	// DependsOn is a single value slice
 	bi.DependsOn = []string{item.Id}

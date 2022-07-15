@@ -56,19 +56,6 @@ func (bi *batchItem) DependsOnItem(item batchItem) {
 	bi.DependsOn = []string{item.Id}
 }
 
-type ErrorDetails struct {
-	Code    string
-	Message string
-}
-
-type ErrorMessage struct {
-	Error ErrorDetails
-}
-
-func (e ErrorDetails) Error() string {
-	return e.Message
-}
-
 func GetBatchResponseById[T any](resp BatchResponse, itemId string) (T, error) {
 	var res T
 
@@ -77,16 +64,22 @@ func GetBatchResponseById[T any](resp BatchResponse, itemId string) (T, error) {
 			hasError := resp.Status >= 400 && resp.Status <= 600
 
 			if hasError {
-				var err ErrorMessage
+				var errResp errorResponse
 
-				jsonStr, _ := json.Marshal(resp.Body)
-				json.Unmarshal(jsonStr, &err)
-
-				return res, err.Error
+				jsonStr, err := json.Marshal(resp.Body)
+				if weGotAnError(err) {
+					return res, err
+				}
+				json.Unmarshal(jsonStr, &errResp)
+				return res, errResp.Error
 			}
 
-			jsonStr, _ := json.Marshal(resp.Body)
+			jsonStr, err := json.Marshal(resp.Body)
+			if weGotAnError(err) {
+				return res, err
+			}
 			json.Unmarshal(jsonStr, &res)
+
 			return res, nil
 		}
 	}
@@ -177,6 +170,19 @@ type batchRequest struct {
 
 type BatchResponse struct {
 	Responses []batchItem
+}
+
+type errorDetails struct {
+	Code    string
+	Message string
+}
+
+func (e errorDetails) Error() string {
+	return fmt.Sprintf("Code: %s \n Message: %s", e.Code, e.Message)
+}
+
+type errorResponse struct {
+	Error errorDetails
 }
 
 type batchItem struct {

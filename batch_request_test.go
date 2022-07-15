@@ -116,7 +116,7 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 
 	reqInfo := getRequestInfo()
 	batch := NewBatchRequest()
-	batchItem, _ := batch.AppendBatchItem(*reqInfo)
+	batch.AppendBatchItem(*reqInfo)
 
 	resp, err := SendBatch(*batch, reqAdapter)
 	require.NoError(t, err)
@@ -125,7 +125,7 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 		UserName string `json:"username"`
 	}
 
-	user, err := GetBatchResponseById[User](resp, batchItem.Id)
+	user, err := GetBatchResponseById[User](resp, "2")
 	require.NoError(t, err)
 
 	assert.Equal(t, user.UserName, "testuser")
@@ -151,7 +151,7 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 	}
 
 	_, err = GetBatchResponseById[User](resp, "3")
-	assert.Equal(t, err.Error(), "Insufficient permissions")
+	assert.Equal(t, "Code: Forbidden \n Message: Insufficient permissions", err.Error())
 }
 
 func makeMockRequest(mockStatus int, mockResponse string) *httptest.Server {

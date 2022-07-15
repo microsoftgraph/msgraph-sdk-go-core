@@ -56,6 +56,44 @@ func (bi *batchItem) DependsOnItem(item batchItem) {
 	bi.DependsOn = []string{item.Id}
 }
 
+type ErrorDetails struct {
+	Code    string
+	Message string
+}
+
+type ErrorMessage struct {
+	Error ErrorDetails
+}
+
+func (e ErrorDetails) Error() string {
+	return e.Message
+}
+
+func GetBatchResponseById[T any](resp BatchResponse, itemId string) (T, error) {
+	var res T
+
+	for _, resp := range resp.Responses {
+		if resp.Id == itemId {
+			hasError := resp.Status >= 400 && resp.Status <= 600
+
+			if hasError {
+				var err ErrorMessage
+
+				jsonStr, _ := json.Marshal(resp.Body)
+				json.Unmarshal(jsonStr, &err)
+
+				return res, err.Error
+			}
+
+			jsonStr, _ := json.Marshal(resp.Body)
+			json.Unmarshal(jsonStr, &res)
+			return res, nil
+		}
+	}
+
+	return res, errors.New("Response not found, check if id is valid")
+}
+
 // NewBatchRequest creates an instance of BatchRequest
 func NewBatchRequest() *batchRequest {
 	return &batchRequest{}
@@ -148,4 +186,5 @@ type batchItem struct {
 	Headers   map[string]string `json:"headers"`
 	Body      map[string]any    `json:"body"`
 	DependsOn []string          `json:"dependsOn"`
+	Status    int               `json:"status,omitempty"`
 }

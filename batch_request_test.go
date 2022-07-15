@@ -96,6 +96,71 @@ func TestHandlesHTTPError(t *testing.T) {
 	assert.Equal(t, err.Error(), "Request failed with status: 403")
 }
 
+func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
+	mockResponse := `{
+			"responses": [
+				{
+					"id": "2",
+					"status": 200,
+					"body": {
+						"username": "testuser"
+					}
+				}
+			]
+		}`
+	mockServer := makeMockRequest(200, mockResponse)
+	defer mockServer.Close()
+
+	mockPath := mockServer.URL + "/$batch"
+	reqAdapter.SetBaseUrl(mockPath)
+
+	reqInfo := getRequestInfo()
+	batch := NewBatchRequest()
+	batchItem, _ := batch.AppendBatchItem(*reqInfo)
+
+	resp, err := SendBatch(*batch, reqAdapter)
+	require.NoError(t, err)
+
+	type User struct {
+		UserName string `json:"username"`
+	}
+
+	user, err := GetBatchResponseById[User](resp, batchItem.Id)
+	require.NoError(t, err)
+
+	assert.Equal(t, user.UserName, "testuser")
+}
+
+func TestGetResponseByIdFailedRequest(t *testing.T) {
+	mockServer := makeMockRequest(200, getDummyJSON())
+	defer mockServer.Close()
+
+	mockPath := mockServer.URL + "/$batch"
+	reqAdapter.SetBaseUrl(mockPath)
+
+	reqInfo := getRequestInfo()
+	batch := NewBatchRequest()
+	_, err := batch.AppendBatchItem(*reqInfo)
+	require.NoError(t, err)
+
+	resp, err := SendBatch(*batch, reqAdapter)
+	require.NoError(t, err)
+
+	type User struct {
+		UserName string `json:"username"`
+	}
+
+	_, err = GetBatchResponseById[User](resp, "3")
+	assert.Equal(t, err.Error(), "Insufficient permissions")
+}
+
+func makeMockRequest(mockStatus int, mockResponse string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(mockStatus)
+		fmt.Fprint(w, mockResponse)
+	}))
+}
+
 func getRequestInfo() *abstractions.RequestInformation {
 	content := `
 {
@@ -126,7 +191,7 @@ func getDummyJSON() string {
 	  "body": {
 	    "error": {
 	      "code": "Forbidden",
-	      "message": "..."
+	      "message": "Insufficient permissions"
 	    }
 	  }
 	},

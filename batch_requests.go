@@ -56,6 +56,7 @@ func (bi *batchItem) DependsOnItem(item batchItem) {
 	bi.DependsOn = []string{item.Id}
 }
 
+// GetBatchResponseById returns the response of the batch request item with the given id.
 func GetBatchResponseById[T any](resp BatchResponse, itemId string) (T, error) {
 	var res T
 

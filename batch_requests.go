@@ -62,7 +62,7 @@ func GetBatchResponseById[T any](resp BatchResponse, itemId string) (T, error) {
 
 	for _, resp := range resp.Responses {
 		if resp.Id == itemId {
-			hasError := resp.Status >= 400 && resp.Status <= 600
+			hasError := resp.Status >= 400 && resp.Status < 600
 
 			if hasError {
 				var errResp errorResponse
@@ -144,7 +144,7 @@ func sendBatchRequest(requestInfo *abstractions.RequestInformation, adapter abst
 			return nil, errors.New("Response type assertion failed")
 		}
 
-		if status := resp.StatusCode; status >= 400 && status <= 600 {
+		if status := resp.StatusCode; status >= 400 && status < 600 {
 			return res, fmt.Errorf("Request failed with status: %d", status)
 		}
 

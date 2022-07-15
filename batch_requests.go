@@ -104,8 +104,8 @@ func buildRequestInfo(jsonBody []byte, baseUrl *url.URL) *abstractions.RequestIn
 func sendBatchRequest(requestInfo *abstractions.RequestInformation, adapter abstractions.RequestAdapter) (BatchResponse, error) {
 	var res BatchResponse
 
-	// we don't care about SendAsync's return value because we don't use it and it is a workaround
-	// on SendAsync's insistence to have a parsable node as a return value
+	// SendAsync type asserts HandlerFunc's return value into a parsable. We bypass SendAsync deserialization by returning a noop
+	// parsable struct and directly marshalling the response into a struct.
 	_, err := adapter.SendAsync(requestInfo, nil, func(response any, errorMappings abstractions.ErrorMappings) (any, error) {
 		resp, ok := response.(*http.Response)
 		if !ok {
@@ -123,7 +123,6 @@ func sendBatchRequest(requestInfo *abstractions.RequestInformation, adapter abst
 
 		json.Unmarshal(body, &res)
 
-		// returning a Noop Parsable here because SendAsync type asserts HandlerFunc's return value
 		return internal.NewNoOpParsable(), nil
 	}, nil)
 

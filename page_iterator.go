@@ -200,7 +200,7 @@ func convertToPage(response interface{}) (PageResult, error) {
 	}
 	value = reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
 
-	nextLink := ref.FieldByName("nextLink")
+	nextLink := ref.FieldByName("odataNextLink")
 	var link *string
 	if !nextLink.IsNil() {
 		nextLink = reflect.NewAt(nextLink.Type(), unsafe.Pointer(nextLink.UnsafeAddr())).Elem()

@@ -89,7 +89,7 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 
 	graphResponse := buildGraphResponse()
 	mockPath := testServer.URL + "/next-page"
-	graphResponse.SetNextLink(&mockPath)
+	graphResponse.SetOdataNextLink(&mockPath)
 
 	pageIterator, _ := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
 	res := make([]string, 0)
@@ -127,7 +127,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 
 	response := buildGraphResponse()
 	mockPath := testServer.URL + "/next-page"
-	response.SetNextLink(&mockPath)
+	response.SetOdataNextLink(&mockPath)
 
 	pageIterator, _ := NewPageIterator(response, reqAdapter, ParsableCons)
 	pageIterator.Iterate(func(pageItem interface{}) bool {
@@ -162,7 +162,7 @@ func buildGraphResponse() *internal.UsersResponse {
 		users = append(users, *u)
 	}
 
-	res.SetNextLink(&nextLink)
+	res.SetOdataNextLink(&nextLink)
 	res.SetValue(users)
 
 	return res

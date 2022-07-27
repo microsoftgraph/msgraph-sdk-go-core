@@ -32,6 +32,14 @@ func ParsableCons(pn serialization.ParseNode) (serialization.Parsable, error) {
 	return internal.NewUsersResponse(), nil
 }
 
+func TestConstructorWithInvalidRequestAdapter(t *testing.T) {
+	graphResponse := internal.NewUsersResponse()
+
+	_, err := NewPageIterator(graphResponse, nil, ParsableCons)
+
+	assert.NotNil(t, err)
+}
+
 func TestConstructorWithInvalidGraphResponse(t *testing.T) {
 	graphResponse := internal.NewUsersResponse()
 
@@ -55,10 +63,11 @@ func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 	        	]
         	}
         `)
-
+		assert.NotNil(t, req.Header["ConsistencyLevel"])
 	}))
 	defer testServer.Close()
 	pageIterator, _ := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
+	pageIterator.SetHeaders(map[string]string{"ConsistencyLevel": "eventual"})
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)

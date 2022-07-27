@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.27.0] - 2022-07-21
+
+### Changed
+
+- Fixes PageIterator to use updated nextLink property
+
+### Changed
+
 ## [0.26.2] - 2022-06-12
 
 ### Changed

@@ -9,7 +9,7 @@ type UsersResponse struct {
 	// Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
 	additionalData map[string]interface{}
 	//
-	nextLink *string
+	odataNextLink *string
 	//
 	value []User
 }
@@ -30,12 +30,12 @@ func (m *UsersResponse) GetAdditionalData() map[string]interface{} {
 	}
 }
 
-// GetNextLink gets the @odata.nextLink property value.
-func (m *UsersResponse) GetNextLink() *string {
+// GetOdataNextLink gets the @odata.nextLink property value.
+func (m *UsersResponse) GetOdataNextLink() *string {
 	if m == nil {
 		return nil
 	} else {
-		return m.nextLink
+		return m.odataNextLink
 	}
 }
 
@@ -57,7 +57,7 @@ func (m *UsersResponse) GetFieldDeserializers() map[string]func(i04eb5309aeaafad
 			return err
 		}
 		if val != nil {
-			m.SetNextLink(val)
+			m.SetOdataNextLink(val)
 		}
 		return nil
 	}
@@ -86,7 +86,7 @@ func (m *UsersResponse) IsNil() bool {
 // Serialize serializes information the current object
 func (m *UsersResponse) Serialize(writer i04eb5309aeaafadd28374d79c8471df9b267510b4dc2e3144c378c50f6fd7b55.SerializationWriter) error {
 	{
-		err := writer.WriteStringValue("@odata.nextLink", m.GetNextLink())
+		err := writer.WriteStringValue("@odata.nextLink", m.GetOdataNextLink())
 		if err != nil {
 			return err
 		}
@@ -118,10 +118,10 @@ func (m *UsersResponse) SetAdditionalData(value map[string]interface{}) {
 	}
 }
 
-// SetNextLink sets the @odata.nextLink property value.
-func (m *UsersResponse) SetNextLink(value *string) {
+// SetOdataNextLink sets the @odata.nextLink property value.
+func (m *UsersResponse) SetOdataNextLink(value *string) {
 	if m != nil {
-		m.nextLink = value
+		m.odataNextLink = value
 	}
 }
 

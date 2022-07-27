@@ -74,7 +74,7 @@ func NewPageIterator(res interface{}, reqAdapter abstractions.RequestAdapter, co
 // Example
 //      pageIterator, err := NewPageIterator(resp, reqAdapter, parsableFactory)
 //      callbackFunc := func (pageItem interface{}) bool {
-//          fmt.Println(pageitem.GetDisplayName())
+//          fmt.Println(page item.GetDisplayName())
 //          return true
 //      }
 //      err := pageIterator.Iterate(callbackFunc)
@@ -186,6 +186,11 @@ func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
 	return keepIterating
 }
 
+// PageWithOdataNextLink represents a contract with the GetOdataNextLink() method
+type PageWithOdataNextLink interface {
+	GetOdataNextLink() *string
+}
+
 func convertToPage(response interface{}) (PageResult, error) {
 	var page PageResult
 
@@ -200,13 +205,6 @@ func convertToPage(response interface{}) (PageResult, error) {
 	}
 	value = reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
 
-	nextLink := ref.FieldByName("odataNextLink")
-	var link *string
-	if !nextLink.IsNil() {
-		nextLink = reflect.NewAt(nextLink.Type(), unsafe.Pointer(nextLink.UnsafeAddr())).Elem()
-		link = nextLink.Interface().(*string)
-	}
-
 	// Collect all entities in the value slice.
 	// This converts a graph slice ie []graph.User to a dynamic slice []interface{}
 	collected := make([]interface{}, 0)
@@ -214,7 +212,12 @@ func convertToPage(response interface{}) (PageResult, error) {
 		collected = append(collected, value.Index(i).Interface())
 	}
 
-	page.nextLink = link
+	parsablePage, ok := response.(PageWithOdataNextLink)
+	if !ok {
+		return page, errors.New("response does not have next link accessor")
+	}
+
+	page.nextLink = parsablePage.GetOdataNextLink()
 	page.value = collected
 
 	return page, nil

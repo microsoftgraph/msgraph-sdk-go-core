@@ -48,6 +48,20 @@ func TestConstructorWithInvalidGraphResponse(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestConstructorWithInvalidUserGraphResponse(t *testing.T) {
+	graphResponse := internal.NewInvalidUsersResponse()
+
+	nextLink := "next-page"
+	users := make([]internal.User, 0)
+
+	graphResponse.SetNextLink(&nextLink)
+	graphResponse.SetValue(users)
+
+	_, err := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
+
+	assert.NotNil(t, err)
+}
+
 func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 	res := make([]string, 0)
 	graphResponse := buildGraphResponse()

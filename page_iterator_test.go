@@ -32,8 +32,30 @@ func ParsableCons(pn serialization.ParseNode) (serialization.Parsable, error) {
 	return internal.NewUsersResponse(), nil
 }
 
+func TestConstructorWithInvalidRequestAdapter(t *testing.T) {
+	graphResponse := internal.NewUsersResponse()
+
+	_, err := NewPageIterator(graphResponse, nil, ParsableCons)
+
+	assert.NotNil(t, err)
+}
+
 func TestConstructorWithInvalidGraphResponse(t *testing.T) {
 	graphResponse := internal.NewUsersResponse()
+
+	_, err := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
+
+	assert.NotNil(t, err)
+}
+
+func TestConstructorWithInvalidUserGraphResponse(t *testing.T) {
+	graphResponse := internal.NewInvalidUsersResponse()
+
+	nextLink := "next-page"
+	users := make([]internal.User, 0)
+
+	graphResponse.SetNextLink(&nextLink)
+	graphResponse.SetValue(users)
 
 	_, err := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
 
@@ -55,10 +77,11 @@ func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 	        	]
         	}
         `)
-
+		assert.NotNil(t, req.Header["ConsistencyLevel"])
 	}))
 	defer testServer.Close()
 	pageIterator, _ := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
+	pageIterator.SetHeaders(map[string]string{"ConsistencyLevel": "eventual"})
 
 	pageIterator.Iterate(func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)
@@ -89,7 +112,7 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 
 	graphResponse := buildGraphResponse()
 	mockPath := testServer.URL + "/next-page"
-	graphResponse.SetNextLink(&mockPath)
+	graphResponse.SetOdataNextLink(&mockPath)
 
 	pageIterator, _ := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
 	res := make([]string, 0)
@@ -127,7 +150,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 
 	response := buildGraphResponse()
 	mockPath := testServer.URL + "/next-page"
-	response.SetNextLink(&mockPath)
+	response.SetOdataNextLink(&mockPath)
 
 	pageIterator, _ := NewPageIterator(response, reqAdapter, ParsableCons)
 	pageIterator.Iterate(func(pageItem interface{}) bool {
@@ -162,7 +185,7 @@ func buildGraphResponse() *internal.UsersResponse {
 		users = append(users, *u)
 	}
 
-	res.SetNextLink(&nextLink)
+	res.SetOdataNextLink(&nextLink)
 	res.SetValue(users)
 
 	return res

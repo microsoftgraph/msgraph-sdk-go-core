@@ -1,6 +1,7 @@
 package msgraphgocore
 
 import (
+	"context"
 	"errors"
 	"net/url"
 	"reflect"
@@ -148,7 +149,7 @@ func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
 	requestInfo.Headers = pI.headers
 	requestInfo.AddRequestOptions(pI.reqOptions)
 
-	graphResponse, err = pI.reqAdapter.SendAsync(requestInfo, pI.constructorFunc, nil, nil)
+	graphResponse, err = pI.reqAdapter.SendAsync(context.Background(), requestInfo, pI.constructorFunc, nil, nil)
 	if err != nil {
 		return graphResponse, errors.New("fetching next page failed")
 	}

@@ -13,8 +13,8 @@ import (
 	"github.com/microsoftgraph/msgraph-sdk-go-core/internal"
 )
 
-// SendBatch sends a batch request
-func SendBatch(batch *batchRequest, adapter abstractions.RequestAdapter) (*BatchResponse, error) {
+// Send sends a batch request
+func Send(batch *batchRequest, adapter abstractions.RequestAdapter) (*BatchResponse, error) {
 	batchJsonBody, err := batch.toJson()
 	if err != nil {
 		return nil, err

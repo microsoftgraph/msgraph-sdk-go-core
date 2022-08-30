@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 	"io"
 	"net/http"
 	"net/url"
@@ -32,7 +33,7 @@ func Send(batch *batchRequest, adapter abstractions.RequestAdapter) (*BatchRespo
 // AppendBatchItem converts RequestInformation to a BatchItem and adds it to a BatchRequest
 //
 // You can add upto 20 BatchItems to a BatchRequest
-func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (*batchItem, error) {
+func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (*batchItem[serialization.Parsable], error) {
 	if len(br.Requests) > 19 {
 		return nil, errors.New("Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
@@ -49,13 +50,13 @@ func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation)
 // DependsOnItem creates a dependency chain between BatchItems.If A depends on B, then B will be sent before B
 // A batchItem can only depend on one other batchItem
 // see: https://docs.microsoft.com/en-us/graph/known-issues#request-dependencies-are-limited
-func (bi *batchItem) DependsOnItem(item batchItem) {
+func (bi *batchItem[T]) DependsOnItem(item batchItem[serialization.Parsable]) {
 	// DependsOn is a single value slice
 	bi.DependsOn = []string{item.Id}
 }
 
 // GetBatchResponseById returns the response of the batch request item with the given id.
-func GetBatchResponseById[T interface{}](resp *BatchResponse, itemId string) (T, error) {
+func GetBatchResponseById[T serialization.Parsable](resp *BatchResponse, itemId string) (T, error) {
 	var res T
 
 	for _, resp := range resp.Responses {
@@ -97,19 +98,19 @@ func NewBatchRequest() *batchRequest {
 	return &batchRequest{}
 }
 
-func toBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, error) {
+func toBatchItem(requestInfo abstractions.RequestInformation) (*batchItem[serialization.Parsable], error) {
 	uri, err := requestInfo.GetUri()
 	if err != nil {
 		return nil, err
 	}
 
-	var body map[string]any
+	var body anyResponseBody
 	err = json.Unmarshal(requestInfo.Content, &body)
 	if err != nil {
 		return nil, err
 	}
 
-	return &batchItem{
+	return &batchItem[serialization.Parsable]{
 		Id:        uuid.NewString(),
 		Method:    requestInfo.Method.String(),
 		Body:      body,
@@ -179,11 +180,11 @@ func sendBatchRequest(requestInfo *abstractions.RequestInformation, adapter abst
 }
 
 type batchRequest struct {
-	Requests []*batchItem `json:"requests"`
+	Requests []*batchItem[serialization.Parsable] `json:"requests"`
 }
 
 type BatchResponse struct {
-	Responses []batchItem
+	Responses []batchItem[serialization.Parsable]
 }
 
 type errorDetails struct {
@@ -199,12 +200,22 @@ type errorResponse struct {
 	Error errorDetails
 }
 
-type batchItem struct {
+type batchItem[T serialization.Parsable] struct {
 	Id        string            `json:"id"`
 	Method    string            `json:"method"`
 	Url       string            `json:"url"`
 	Headers   map[string]string `json:"headers"`
-	Body      map[string]any    `json:"body"`
+	Body      T                 `json:"body"`
 	DependsOn []string          `json:"dependsOn"`
 	Status    int               `json:"status,omitempty"`
+}
+
+type anyResponseBody map[string]any
+
+func (h anyResponseBody) Serialize(writer serialization.SerializationWriter) error {
+	panic("Not supported")
+}
+
+func (h anyResponseBody) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	panic("Not supported")
 }

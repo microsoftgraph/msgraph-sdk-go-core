@@ -2,6 +2,7 @@ package msgraphgocore
 
 import (
 	"fmt"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -121,14 +122,22 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 	resp, err := Send(batch, reqAdapter)
 	require.NoError(t, err)
 
-	type User struct {
-		UserName string `json:"username"`
-	}
-
 	user, err := GetBatchResponseById[User](resp, "2")
 	require.NoError(t, err)
 
 	assert.Equal(t, user.UserName, "testuser")
+}
+
+type User struct {
+	UserName string `json:"username"`
+}
+
+func (u User) Serialize(writer serialization.SerializationWriter) error {
+	panic("implement me")
+}
+
+func (u User) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	panic("implement me")
 }
 
 func TestGetResponseByIdFailedRequest(t *testing.T) {
@@ -145,10 +154,6 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 
 	resp, err := Send(batch, reqAdapter)
 	require.NoError(t, err)
-
-	type User struct {
-		UserName string `json:"username"`
-	}
 
 	_, err = GetBatchResponseById[User](resp, "3")
 	assert.Equal(t, "Code: Forbidden \n Message: Insufficient permissions", err.Error())

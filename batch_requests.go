@@ -15,7 +15,7 @@ import (
 )
 
 // Send sends a batch request
-func Send(batch *batchRequest, adapter abstractions.RequestAdapter) (*BatchResponse, error) {
+func (batch *batchRequest) Send(adapter abstractions.RequestAdapter) (*BatchResponse, error) {
 	batchJsonBody, err := batch.toJson()
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func Send(batch *batchRequest, adapter abstractions.RequestAdapter) (*BatchRespo
 // AppendBatchItem converts RequestInformation to a BatchItem and adds it to a BatchRequest
 //
 // You can add upto 20 BatchItems to a BatchRequest
-func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (*batchItem[serialization.Parsable], error) {
+func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (*batchItem, error) {
 	if len(br.Requests) > 19 {
 		return nil, errors.New("Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
@@ -50,7 +50,7 @@ func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation)
 // DependsOnItem creates a dependency chain between BatchItems.If A depends on B, then B will be sent before B
 // A batchItem can only depend on one other batchItem
 // see: https://docs.microsoft.com/en-us/graph/known-issues#request-dependencies-are-limited
-func (bi *batchItem[T]) DependsOnItem(item batchItem[serialization.Parsable]) {
+func (bi *batchItem) DependsOnItem(item batchItem) {
 	// DependsOn is a single value slice
 	bi.DependsOn = []string{item.Id}
 }
@@ -98,19 +98,19 @@ func NewBatchRequest() *batchRequest {
 	return &batchRequest{}
 }
 
-func toBatchItem(requestInfo abstractions.RequestInformation) (*batchItem[serialization.Parsable], error) {
+func toBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, error) {
 	uri, err := requestInfo.GetUri()
 	if err != nil {
 		return nil, err
 	}
 
-	var body anyResponseBody
+	var body map[string]any
 	err = json.Unmarshal(requestInfo.Content, &body)
 	if err != nil {
 		return nil, err
 	}
 
-	return &batchItem[serialization.Parsable]{
+	return &batchItem{
 		Id:        uuid.NewString(),
 		Method:    requestInfo.Method.String(),
 		Body:      body,
@@ -180,11 +180,11 @@ func sendBatchRequest(requestInfo *abstractions.RequestInformation, adapter abst
 }
 
 type batchRequest struct {
-	Requests []*batchItem[serialization.Parsable] `json:"requests"`
+	Requests []*batchItem `json:"requests"`
 }
 
 type BatchResponse struct {
-	Responses []batchItem[serialization.Parsable]
+	Responses []batchItem
 }
 
 type errorDetails struct {
@@ -200,22 +200,12 @@ type errorResponse struct {
 	Error errorDetails
 }
 
-type batchItem[T serialization.Parsable] struct {
+type batchItem struct {
 	Id        string            `json:"id"`
 	Method    string            `json:"method"`
 	Url       string            `json:"url"`
 	Headers   map[string]string `json:"headers"`
-	Body      T                 `json:"body"`
+	Body      map[string]any    `json:"body"`
 	DependsOn []string          `json:"dependsOn"`
 	Status    int               `json:"status,omitempty"`
-}
-
-type anyResponseBody map[string]any
-
-func (h anyResponseBody) Serialize(writer serialization.SerializationWriter) error {
-	panic("Not supported")
-}
-
-func (h anyResponseBody) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
-	panic("Not supported")
 }

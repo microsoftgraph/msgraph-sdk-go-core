@@ -12,10 +12,9 @@ reqInfo := client.Me().CreateGetRequestInformation()
 batch := msgraphsdkcore.NewBatchRequest()
 batchItem := batch.AppendBatchItem(*reqInfo)
 
-resp, err := msgraphsdkcore.Send(*batch, reqAdapter)
+resp, err := batch.Send(reqAdapter)
 
 // print the first response
-fmt.Println(resp.Responses[0].Body) // raw response
 fmt.Println(GetBatchResponseById[User](resp, "1")) // returns a serialized response
 ```
 

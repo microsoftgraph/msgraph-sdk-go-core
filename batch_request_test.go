@@ -61,7 +61,7 @@ func TestReturnsBatchResponse(t *testing.T) {
 	batch := NewBatchRequest()
 	batch.AppendBatchItem(*reqInfo)
 
-	resp, err := Send(batch, reqAdapter)
+	resp, err := batch.Send(reqAdapter)
 	require.NoError(t, err)
 
 	assert.Equal(t, len(resp.Responses), 4)
@@ -93,7 +93,7 @@ func TestHandlesHTTPError(t *testing.T) {
 	batch := NewBatchRequest()
 	batch.AppendBatchItem(*reqInfo)
 
-	_, err := Send(batch, reqAdapter)
+	_, err := batch.Send(reqAdapter)
 	assert.Equal(t, err.Error(), "Request failed with status: 403")
 }
 
@@ -119,7 +119,7 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 	batch := NewBatchRequest()
 	batch.AppendBatchItem(*reqInfo)
 
-	resp, err := Send(batch, reqAdapter)
+	resp, err := batch.Send(reqAdapter)
 	require.NoError(t, err)
 
 	user, err := GetBatchResponseById[User](resp, "2")
@@ -152,7 +152,7 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 	_, err := batch.AppendBatchItem(*reqInfo)
 	require.NoError(t, err)
 
-	resp, err := Send(batch, reqAdapter)
+	resp, err := batch.Send(reqAdapter)
 	require.NoError(t, err)
 
 	_, err = GetBatchResponseById[User](resp, "3")

@@ -9,7 +9,7 @@ type UsersResponse struct {
 	// Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
 	additionalData map[string]interface{}
 	//
-	odataNextLink *string
+	oDataNextLink *string
 	//
 	value []User
 }
@@ -35,7 +35,7 @@ func (m *UsersResponse) GetOdataNextLink() *string {
 	if m == nil {
 		return nil
 	} else {
-		return m.odataNextLink
+		return m.oDataNextLink
 	}
 }
 
@@ -121,7 +121,7 @@ func (m *UsersResponse) SetAdditionalData(value map[string]interface{}) {
 // SetOdataNextLink sets the @odata.nextLink property value.
 func (m *UsersResponse) SetOdataNextLink(value *string) {
 	if m != nil {
-		m.odataNextLink = value
+		m.oDataNextLink = value
 	}
 }
 

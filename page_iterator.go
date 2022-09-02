@@ -23,8 +23,8 @@ type PageIterator struct {
 
 // PageResult represents a page object built from a graph response object
 type PageResult struct {
-	nextLink *string
-	value    []interface{}
+	oDataNextLink *string
+	value         []interface{}
 }
 
 func (p *PageResult) getValue() []interface{} {
@@ -35,12 +35,12 @@ func (p *PageResult) getValue() []interface{} {
 	return p.value
 }
 
-func (p *PageResult) getNextLink() *string {
+func (p *PageResult) getOdataNextLink() *string {
 	if p == nil {
 		return nil
 	}
 
-	return p.nextLink
+	return p.oDataNextLink
 }
 
 // NewPageIterator creates an iterator instance
@@ -114,7 +114,7 @@ func (pI *PageIterator) SetReqOptions(reqOptions []abstractions.RequestOption) {
 func (pI *PageIterator) next(context context.Context) (PageResult, error) {
 	var page PageResult
 
-	if pI.currentPage.getNextLink() == nil {
+	if pI.currentPage.getOdataNextLink() == nil || *pI.currentPage.getOdataNextLink() == "" {
 		return page, nil
 	}
 
@@ -135,11 +135,11 @@ func (pI *PageIterator) fetchNextPage(context context.Context) (serialization.Pa
 	var graphResponse serialization.Parsable
 	var err error
 
-	if pI.currentPage.getNextLink() == nil {
+	if pI.currentPage.getOdataNextLink() == nil {
 		return graphResponse, nil
 	}
 
-	nextLink, err := url.Parse(*pI.currentPage.getNextLink())
+	nextLink, err := url.Parse(*pI.currentPage.getOdataNextLink())
 	if err != nil {
 		return graphResponse, errors.New("parsing nextLink url failed")
 	}
@@ -219,7 +219,7 @@ func convertToPage(response interface{}) (PageResult, error) {
 		return page, errors.New("response does not have next link accessor")
 	}
 
-	page.nextLink = parsablePage.GetOdataNextLink()
+	page.oDataNextLink = parsablePage.GetOdataNextLink()
 	page.value = collected
 
 	return page, nil

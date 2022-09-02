@@ -1,6 +1,7 @@
 package msgraphgocore
 
 import (
+	"context"
 	"fmt"
 	nethttp "net/http"
 	httptest "net/http/httptest"
@@ -83,7 +84,7 @@ func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 	pageIterator, _ := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
 	pageIterator.SetHeaders(map[string]string{"ConsistencyLevel": "eventual"})
 
-	pageIterator.Iterate(func(pageItem interface{}) bool {
+	pageIterator.Iterate(context.Background(), func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)
 
 		res = append(res, *item.GetDisplayName())
@@ -117,7 +118,7 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 	pageIterator, _ := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
 	res := make([]string, 0)
 
-	err := pageIterator.Iterate(func(pageItem interface{}) bool {
+	err := pageIterator.Iterate(context.Background(), func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)
 		res = append(res, *item.GetId())
 		return true
@@ -153,7 +154,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 	response.SetOdataNextLink(&mockPath)
 
 	pageIterator, _ := NewPageIterator(response, reqAdapter, ParsableCons)
-	pageIterator.Iterate(func(pageItem interface{}) bool {
+	pageIterator.Iterate(context.Background(), func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)
 		res = append(res, *item.GetId())
 
@@ -162,7 +163,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 
 	assert.Equal(t, res, []string{"0", "1", "2", "3", "4"})
 
-	pageIterator.Iterate(func(pageItem interface{}) bool {
+	pageIterator.Iterate(context.Background(), func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)
 		res2 = append(res2, *item.GetId())
 

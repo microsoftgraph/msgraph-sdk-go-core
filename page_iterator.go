@@ -1,6 +1,7 @@
 package msgraphgocore
 
 import (
+	"context"
 	"errors"
 	"net/url"
 	"reflect"
@@ -72,13 +73,14 @@ func NewPageIterator(res interface{}, reqAdapter abstractions.RequestAdapter, co
 // return false from the callback.
 //
 // Example
-//      pageIterator, err := NewPageIterator(resp, reqAdapter, parsableFactory)
-//      callbackFunc := func (pageItem interface{}) bool {
-//          fmt.Println(page item.GetDisplayName())
-//          return true
-//      }
-//      err := pageIterator.Iterate(callbackFunc)
-func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) error {
+//
+//	pageIterator, err := NewPageIterator(resp, reqAdapter, parsableFactory)
+//	callbackFunc := func (pageItem interface{}) bool {
+//	    fmt.Println(page item.GetDisplayName())
+//	    return true
+//	}
+//	err := pageIterator.Iterate(context.Background(), callbackFunc)
+func (pI *PageIterator) Iterate(context context.Context, callback func(pageItem interface{}) bool) error {
 	for {
 		keepIterating := pI.enumerate(callback)
 
@@ -87,7 +89,7 @@ func (pI *PageIterator) Iterate(callback func(pageItem interface{}) bool) error 
 			return nil
 		}
 
-		nextPage, err := pI.next()
+		nextPage, err := pI.next(context)
 		if err != nil {
 			return err
 		}
@@ -109,14 +111,14 @@ func (pI *PageIterator) SetReqOptions(reqOptions []abstractions.RequestOption) {
 	pI.reqOptions = reqOptions
 }
 
-func (pI *PageIterator) next() (PageResult, error) {
+func (pI *PageIterator) next(context context.Context) (PageResult, error) {
 	var page PageResult
 
 	if pI.currentPage.getNextLink() == nil {
 		return page, nil
 	}
 
-	resp, err := pI.fetchNextPage()
+	resp, err := pI.fetchNextPage(context)
 	if err != nil {
 		return page, err
 	}
@@ -129,7 +131,7 @@ func (pI *PageIterator) next() (PageResult, error) {
 	return page, nil
 }
 
-func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
+func (pI *PageIterator) fetchNextPage(context context.Context) (serialization.Parsable, error) {
 	var graphResponse serialization.Parsable
 	var err error
 
@@ -148,7 +150,7 @@ func (pI *PageIterator) fetchNextPage() (serialization.Parsable, error) {
 	requestInfo.Headers = pI.headers
 	requestInfo.AddRequestOptions(pI.reqOptions)
 
-	graphResponse, err = pI.reqAdapter.SendAsync(requestInfo, pI.constructorFunc, nil, nil)
+	graphResponse, err = pI.reqAdapter.SendAsync(context, requestInfo, pI.constructorFunc, nil)
 	if err != nil {
 		return graphResponse, errors.New("fetching next page failed")
 	}

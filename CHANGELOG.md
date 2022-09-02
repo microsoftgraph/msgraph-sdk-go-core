@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.28.0]- 2022-08-24
+
+### Changed
+
+- Upgrade to library `kiota-abstraction` v1.0.0 breaking change
+- Introduces `context.Context` object to Page Iterator
+
 ## [0.27.0] - 2022-07-21
 
 ### Changed

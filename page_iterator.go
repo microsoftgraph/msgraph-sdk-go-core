@@ -73,12 +73,13 @@ func NewPageIterator(res interface{}, reqAdapter abstractions.RequestAdapter, co
 // return false from the callback.
 //
 // Example
-//      pageIterator, err := NewPageIterator(resp, reqAdapter, parsableFactory)
-//      callbackFunc := func (pageItem interface{}) bool {
-//          fmt.Println(page item.GetDisplayName())
-//          return true
-//      }
-//      err := pageIterator.Iterate(callbackFunc)
+//
+//	pageIterator, err := NewPageIterator(resp, reqAdapter, parsableFactory)
+//	callbackFunc := func (pageItem interface{}) bool {
+//	    fmt.Println(page item.GetDisplayName())
+//	    return true
+//	}
+//	err := pageIterator.Iterate(context.Background(), callbackFunc)
 func (pI *PageIterator) Iterate(context context.Context, callback func(pageItem interface{}) bool) error {
 	for {
 		keepIterating := pI.enumerate(callback)

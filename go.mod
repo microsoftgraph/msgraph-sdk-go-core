@@ -6,7 +6,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/microsoft/kiota-abstractions-go v0.9.1
 	github.com/microsoft/kiota-http-go v0.7.0
-	github.com/microsoft/kiota-serialization-json-go v0.5.5
+	github.com/microsoft/kiota-serialization-json-go v0.5.6
 	github.com/stretchr/testify v1.8.0
 )
 

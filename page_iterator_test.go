@@ -70,7 +70,7 @@ func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, `
 			{
-				"nextLink": "",
+				"@odata.nextLink": "",
 				"value": [
 	        		{
 	            		"id": "10"
@@ -99,7 +99,7 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, `
 			{
-				"nextLink": "",
+				"@odata.nextLink": "",
 				"value": [
 	        		{
 	            		"id": "10"
@@ -137,7 +137,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, `
 			{
-				"nextLink": "",
+				"@odata.nextLink": "",
 				"value": [
 	        		{
 	            		"id": "10"

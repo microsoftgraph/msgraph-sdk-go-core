@@ -1,8 +1,10 @@
 package msgraphgocore
 
 import (
+	"context"
 	"fmt"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
+	"github.com/microsoftgraph/msgraph-sdk-go-core/internal"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -13,12 +15,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func p[T any](t T) *T {
+	return &t
+}
+
 func TestGeneratesJSONFromRequestBody(t *testing.T) {
 	reqInfo := getRequestInfo()
 
 	batch := NewBatchRequest()
 	item, _ := batch.AppendBatchItem(*reqInfo)
-	item.Id = "1"
+	item.SetId(p("1"))
 
 	expected := "{\"requests\":[{\"id\":\"1\",\"method\":\"GET\",\"url\":\"\",\"headers\":{\"content-type\":\"application/json\"},\"body\":{\"username\":\"name\"},\"dependsOn\":[]}]}"
 	actual, _ := batch.toJson()
@@ -34,10 +40,10 @@ func TestDependsOnRelationshipInBatchRequestItems(t *testing.T) {
 	batch := NewBatchRequest()
 	batchItem1, _ := batch.AppendBatchItem(*reqInfo1)
 	batchItem2, _ := batch.AppendBatchItem(*reqInfo2)
-	batchItem1.Id = "1"
-	batchItem2.Id = "2"
+	batchItem1.SetId(p("1"))
+	batchItem2.SetId(p("2"))
 
-	batchItem2.DependsOnItem(*batchItem1)
+	batchItem2.DependsOnItem(batchItem1)
 
 	expected := "{\"requests\":[{\"id\":\"1\",\"method\":\"GET\",\"url\":\"\",\"headers\":{\"content-type\":\"application/json\"},\"body\":{\"username\":\"name\"},\"dependsOn\":[]},{\"id\":\"2\",\"method\":\"GET\",\"url\":\"\",\"headers\":{\"content-type\":\"application/json\"},\"body\":{\"username\":\"name\"},\"dependsOn\":[\"1\"]}]}"
 	actual, err := batch.toJson()
@@ -48,6 +54,7 @@ func TestDependsOnRelationshipInBatchRequestItems(t *testing.T) {
 
 func TestReturnsBatchResponse(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		jsonResponse := getDummyJSON()
 		w.WriteHeader(200)
 		fmt.Fprint(w, jsonResponse)
@@ -61,10 +68,10 @@ func TestReturnsBatchResponse(t *testing.T) {
 	batch := NewBatchRequest()
 	batch.AppendBatchItem(*reqInfo)
 
-	resp, err := batch.Send(reqAdapter)
+	resp, err := batch.Send(context.Background(), reqAdapter)
 	require.NoError(t, err)
 
-	assert.Equal(t, len(resp.Responses), 4)
+	assert.Equal(t, len(resp.GetResponses()), 4)
 }
 
 func TestRespectsBatchItemLimitOf20BatchItems(t *testing.T) {
@@ -79,8 +86,9 @@ func TestRespectsBatchItemLimitOf20BatchItems(t *testing.T) {
 	assert.Equal(t, err.Error(), "Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 }
 
-func TestHandlesHTTPError(t *testing.T) {
+func TestHandlesUnhandledHTTPError(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(403)
 		fmt.Fprint(w, "")
 	}))
@@ -93,8 +101,42 @@ func TestHandlesHTTPError(t *testing.T) {
 	batch := NewBatchRequest()
 	batch.AppendBatchItem(*reqInfo)
 
-	_, err := batch.Send(reqAdapter)
-	assert.Equal(t, err.Error(), "Request failed with status: 403")
+	_, err := batch.Send(context.Background(), reqAdapter)
+	assert.Equal(t, err.Error(), "The server returned an unexpected status code and no error factory is registered for this code: 403")
+}
+
+func TestHandlesHTTPError(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(403)
+		fmt.Fprint(w, "")
+	}))
+	defer testServer.Close()
+
+	mockPath := testServer.URL + "/$batch"
+	reqAdapter.SetBaseUrl(mockPath)
+
+	reqInfo := getRequestInfo()
+	batch := NewBatchRequest()
+	batch.AppendBatchItem(*reqInfo)
+
+	errorMapping := abstractions.ErrorMappings{
+		"4XX": internal.CreateSampleErrorFromDiscriminatorValue,
+		"5XX": internal.CreateSampleErrorFromDiscriminatorValue,
+	}
+	// register errorMapper
+	err := RegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY, errorMapping)
+	if err != nil {
+		return
+	}
+
+	_, err = batch.Send(context.Background(), reqAdapter)
+	assert.Equal(t, err.Error(), "content is empty")
+
+	err = DeRegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY)
+	if err != nil {
+		return
+	} // global
 }
 
 func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
@@ -117,9 +159,12 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 
 	reqInfo := getRequestInfo()
 	batch := NewBatchRequest()
-	batch.AppendBatchItem(*reqInfo)
+	_, err := batch.AppendBatchItem(*reqInfo)
+	if err != nil {
+		return
+	}
 
-	resp, err := batch.Send(reqAdapter)
+	resp, err := batch.Send(context.Background(), reqAdapter)
 	require.NoError(t, err)
 
 	user, err := GetBatchResponseById[User](resp, "2")
@@ -152,7 +197,7 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 	_, err := batch.AppendBatchItem(*reqInfo)
 	require.NoError(t, err)
 
-	resp, err := batch.Send(reqAdapter)
+	resp, err := batch.Send(context.Background(), reqAdapter)
 	require.NoError(t, err)
 
 	_, err = GetBatchResponseById[User](resp, "3")
@@ -161,6 +206,7 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 
 func makeMockRequest(mockStatus int, mockResponse string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(mockStatus)
 		fmt.Fprint(w, mockResponse)
 	}))

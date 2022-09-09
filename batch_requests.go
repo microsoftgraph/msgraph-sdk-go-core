@@ -1,22 +1,27 @@
 package msgraphgocore
 
 import (
+	"bytes"
+	"context"
+	"encoding/gob"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
-	"io"
-	"net/http"
 	"net/url"
+	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
-	"github.com/microsoftgraph/msgraph-sdk-go-core/internal"
+	absser "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
+const BATCH_REQUEST_ERROR_REGISTRY_KEY = "BATCH_REQUEST_ERROR_REGISTRY_KEY"
+
 // Send sends a batch request
-func (batch *batchRequest) Send(adapter abstractions.RequestAdapter) (*BatchResponse, error) {
-	batchJsonBody, err := batch.toJson()
+func (br *batchRequest) Send(ctx context.Context, adapter abstractions.RequestAdapter) (BatchResponse, error) {
+	batchJsonBody, err := br.toJson()
 	if err != nil {
 		return nil, err
 	}
@@ -27,97 +32,7 @@ func (batch *batchRequest) Send(adapter abstractions.RequestAdapter) (*BatchResp
 	}
 
 	requestInfo := buildRequestInfo(batchJsonBody, baseUrl)
-	return sendBatchRequest(requestInfo, adapter)
-}
-
-// AppendBatchItem converts RequestInformation to a BatchItem and adds it to a BatchRequest
-//
-// You can add upto 20 BatchItems to a BatchRequest
-func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (*batchItem, error) {
-	if len(br.Requests) > 19 {
-		return nil, errors.New("Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
-	}
-
-	batchItem, err := toBatchItem(reqInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	br.Requests = append(br.Requests, batchItem)
-	return batchItem, nil
-}
-
-// DependsOnItem creates a dependency chain between BatchItems.If A depends on B, then B will be sent before B
-// A batchItem can only depend on one other batchItem
-// see: https://docs.microsoft.com/en-us/graph/known-issues#request-dependencies-are-limited
-func (bi *batchItem) DependsOnItem(item batchItem) {
-	// DependsOn is a single value slice
-	bi.DependsOn = []string{item.Id}
-}
-
-// GetBatchResponseById returns the response of the batch request item with the given id.
-func GetBatchResponseById[T serialization.Parsable](resp *BatchResponse, itemId string) (T, error) {
-	var res T
-
-	for _, resp := range resp.Responses {
-		if resp.Id == itemId {
-			hasError := resp.Status >= 400 && resp.Status < 600
-
-			if hasError {
-				var errResp errorResponse
-
-				jsonStr, err := json.Marshal(resp.Body)
-				if err != nil {
-					return res, err
-				}
-				err = json.Unmarshal(jsonStr, &errResp)
-				if err != nil {
-					return res, err
-				}
-				return res, errResp.Error
-			}
-
-			jsonStr, err := json.Marshal(resp.Body)
-			if err != nil {
-				return res, err
-			}
-			err = json.Unmarshal(jsonStr, &res)
-			if err != nil {
-				return res, err
-			}
-
-			return res, nil
-		}
-	}
-
-	return res, errors.New("Response not found, check if id is valid")
-}
-
-// NewBatchRequest creates an instance of BatchRequest
-func NewBatchRequest() *batchRequest {
-	return &batchRequest{}
-}
-
-func toBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, error) {
-	uri, err := requestInfo.GetUri()
-	if err != nil {
-		return nil, err
-	}
-
-	var body map[string]any
-	err = json.Unmarshal(requestInfo.Content, &body)
-	if err != nil {
-		return nil, err
-	}
-
-	return &batchItem{
-		Id:        uuid.NewString(),
-		Method:    requestInfo.Method.String(),
-		Body:      body,
-		Headers:   requestInfo.Headers,
-		Url:       uri.Path,
-		DependsOn: make([]string, 0),
-	}, nil
+	return sendBatchRequest(ctx, requestInfo, adapter)
 }
 
 func (br *batchRequest) toJson() ([]byte, error) {
@@ -141,71 +56,163 @@ func buildRequestInfo(jsonBody []byte, baseUrl *url.URL) *abstractions.RequestIn
 	return requestInfo
 }
 
-func sendBatchRequest(requestInfo *abstractions.RequestInformation, adapter abstractions.RequestAdapter) (*BatchResponse, error) {
-	if requestInfo == nil {
-		return nil, errors.New("requestInfo cannot be nil")
+// AppendBatchItem converts RequestInformation to a BatchItem and adds it to a BatchRequest
+//
+// You can add upto 20 BatchItems to a BatchRequest
+func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (BatchItem, error) {
+	if len(br.Requests) > 19 {
+		return nil, errors.New("Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
 
-	// SendAsync type asserts HandlerFunc's return value into a parsable. We bypass SendAsync deserialization by returning a noop
-	// parsable struct and directly marshalling the response into a struct.
-	var res BatchResponse
-	_, err := adapter.SendAsync(requestInfo, nil, func(response any, errorMappings abstractions.ErrorMappings) (any, error) {
-		resp, ok := response.(*http.Response)
-		if !ok {
-			return nil, errors.New("Response type assertion failed")
-		}
-
-		if status := resp.StatusCode; status >= 400 && status < 600 {
-			return nil, fmt.Errorf("Request failed with status: %d", status)
-		}
-
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		err = json.Unmarshal(body, &res)
-		if err != nil {
-			return nil, err
-		}
-
-		return internal.NewNoOpParsable(), nil
-	}, nil)
-
+	batchItem, err := toBatchItem(reqInfo)
 	if err != nil {
 		return nil, err
+	}
+
+	br.Requests = append(br.Requests, batchItem)
+	return batchItem, nil
+}
+
+// DependsOnItem creates a dependency chain between BatchItems.If A depends on B, then B will be sent before B
+// A batchItem can only depend on one other batchItem
+// see: https://docs.microsoft.com/en-us/graph/known-issues#request-dependencies-are-limited
+func (bi *batchItem) DependsOnItem(item BatchItem) {
+	// DependsOn is a errorRegistry value slice
+	bi.DependsOn = []string{*item.GetId()}
+}
+
+func getResponsePrimaryContentType(responseItem BatchItem) string {
+	header := responseItem.GetHeaders()
+	if header == nil {
+		return ""
+	}
+	rawType := header["Content-Type"]
+	splat := strings.Split(rawType, ";")
+	return strings.ToLower(splat[0])
+}
+
+func getRootParseNode(responseItem BatchItem) (absser.ParseNode, error) {
+	contentType := getResponsePrimaryContentType(responseItem)
+	if contentType == "" {
+		return nil, nil
+	}
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(responseItem.GetBody())
+	if err != nil {
+		return nil, err
+	}
+	return serialization.DefaultParseNodeFactoryInstance.GetRootParseNode(contentType, buf.Bytes())
+}
+
+func throwErrors(responseItem BatchItem, typeName string) error {
+	errorMappings := getErrorMapper(typeName)
+	responseStatus := *responseItem.GetStatus()
+
+	statusAsString := strconv.Itoa(int(responseStatus))
+	var errorCtor absser.ParsableFactory = nil
+	if len(errorMappings) != 0 {
+		if responseStatus >= 400 && responseStatus < 500 && errorMappings["4XX"] != nil {
+			errorCtor = errorMappings["4XX"]
+		} else if responseStatus >= 500 && responseStatus < 600 && errorMappings["5XX"] != nil {
+			errorCtor = errorMappings["5XX"]
+		}
+	}
+
+	if errorCtor == nil {
+		return &abstractions.ApiError{
+			Message: "The server returned an unexpected status code and no error factory is registered for this code: " + statusAsString,
+		}
+	}
+
+	rootNode, err := getRootParseNode(responseItem)
+	if err != nil {
+		return err
+	}
+	if rootNode == nil {
+		return &abstractions.ApiError{
+			Message: "The server returned an unexpected status code with no response body: " + statusAsString,
+		}
+	}
+
+	errValue, err := rootNode.GetObjectValue(errorCtor)
+	if err != nil {
+		return err
+	}
+
+	return errValue.(error)
+}
+
+// GetBatchResponseById returns the response of the batch request item with the given id.
+func GetBatchResponseById[T serialization.Parsable](resp BatchResponse, itemId string) (*T, error) {
+	var res T
+	item := resp.GetResponseById(itemId)
+
+	hasError := *item.GetStatus() >= 400 && *item.GetStatus() < 600
+	if hasError {
+		typeName := reflect.TypeOf(res).Name()
+		return nil, throwErrors(item, typeName)
+	}
+
+	jsonStr, err := json.Marshal(item.GetBody())
+	if err != nil {
+		return &res, err
+	}
+	err = json.Unmarshal(jsonStr, &res)
+	if err != nil {
+		return &res, err
 	}
 
 	return &res, nil
 }
 
-type batchRequest struct {
-	Requests []*batchItem `json:"requests"`
+// NewBatchRequest creates an instance of BatchRequest
+func NewBatchRequest() *batchRequest {
+	return &batchRequest{}
 }
 
-type BatchResponse struct {
-	Responses []batchItem
+func toBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, error) {
+	uri, err := requestInfo.GetUri()
+	if err != nil {
+		return nil, err
+	}
+
+	var body map[string]interface{}
+	err = json.Unmarshal(requestInfo.Content, &body)
+	if err != nil {
+		return nil, err
+	}
+
+	newID := uuid.NewString()
+	method := requestInfo.Method.String()
+
+	return &batchItem{
+		Id:        &newID,
+		method:    &method,
+		Body:      body,
+		Headers:   requestInfo.Headers,
+		Url:       &uri.Path,
+		DependsOn: make([]string, 0),
+	}, nil
 }
 
-type errorDetails struct {
-	Code    string
-	Message string
+func getErrorMapper(key string) abstractions.ErrorMappings {
+	errorMapperSrc, found := GetErrorFactoryFromRegistry(key)
+	if found {
+		return errorMapperSrc
+	}
+	return nil
 }
 
-func (e errorDetails) Error() string {
-	return fmt.Sprintf("Code: %s \n Message: %s", e.Code, e.Message)
-}
+func sendBatchRequest(ctx context.Context, requestInfo *abstractions.RequestInformation, adapter abstractions.RequestAdapter) (BatchResponse, error) {
+	if requestInfo == nil {
+		return nil, errors.New("requestInfo cannot be nil")
+	}
 
-type errorResponse struct {
-	Error errorDetails
-}
+	response, err := adapter.SendAsync(ctx, requestInfo, CreateBatchResponseDiscriminator, getErrorMapper(BATCH_REQUEST_ERROR_REGISTRY_KEY))
+	if err != nil {
+		return nil, err
+	}
 
-type batchItem struct {
-	Id        string            `json:"id"`
-	Method    string            `json:"method"`
-	Url       string            `json:"url"`
-	Headers   map[string]string `json:"headers"`
-	Body      map[string]any    `json:"body"`
-	DependsOn []string          `json:"dependsOn"`
-	Status    int               `json:"status,omitempty"`
+	return response.(BatchResponse), nil
 }

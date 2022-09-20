@@ -41,6 +41,10 @@ func getObjectValue(ctor serialization.ParsableFactory) (serialization.Parsable,
 	return internal.NewCallRecord(), nil
 }
 
+func getObjectValueWithError(ctor serialization.ParsableFactory) (serialization.Parsable, error) {
+	return nil, errors.New("could not get from factory")
+}
+
 func TestSetObjectValueWithoutError(t *testing.T) {
 
 	person := internal.NewPerson()
@@ -49,9 +53,22 @@ func TestSetObjectValueWithoutError(t *testing.T) {
 	assert.NotNil(t, person.GetCallRecord())
 }
 
+func TestSetObjectValueWithError(t *testing.T) {
+
+	person := internal.NewPerson()
+	err := SetObjectValue(getObjectValueWithError, createCallRecordNode, person.SetCallRecord)
+
+	assert.NotNil(t, err)
+	assert.Nil(t, person.GetCallRecord())
+}
+
 func getObjectsValues(ctor serialization.ParsableFactory) ([]serialization.Parsable, error) {
 	slice := []serialization.Parsable{internal.NewCallRecord(), internal.NewCallRecord(), internal.NewCallRecord()}
 	return slice, nil
+}
+
+func getObjectsValuesWithError(ctor serialization.ParsableFactory) ([]serialization.Parsable, error) {
+	return nil, errors.New("could not get from factory")
 }
 
 func TestSetCollectionValueValueWithoutError(t *testing.T) {
@@ -59,7 +76,17 @@ func TestSetCollectionValueValueWithoutError(t *testing.T) {
 	person := internal.NewPerson()
 	err := SetCollectionValue(getObjectsValues, createCallRecordNode, person.SetCallRecords)
 	assert.Nil(t, err)
+	assert.NotNil(t, person.GetCallRecords())
 	assert.Equal(t, len(person.GetCallRecords()), 3)
+}
+
+func TestSetCollectionValueValueWithError(t *testing.T) {
+
+	person := internal.NewPerson()
+	err := SetCollectionValue(getObjectsValuesWithError, createCallRecordNode, person.SetCallRecords)
+	assert.NotNil(t, err)
+	assert.Nil(t, person.GetCallRecords())
+	assert.Equal(t, len(person.GetCallRecords()), 0)
 }
 
 func TestCollectionApply(t *testing.T) {

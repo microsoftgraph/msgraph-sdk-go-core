@@ -3,6 +3,7 @@ package internal
 type Person struct {
 	DisplayName *string
 	callRecord  *CallRecord
+	callRecords []*CallRecord
 }
 
 func NewPerson() *Person {
@@ -23,4 +24,12 @@ func (u *Person) SetCallRecord(record *CallRecord) {
 
 func (u *Person) GetCallRecord() *CallRecord {
 	return u.callRecord
+}
+
+func (u *Person) SetCallRecords(records []*CallRecord) {
+	u.callRecords = records
+}
+
+func (u *Person) GetCallRecords() []*CallRecord {
+	return u.callRecords
 }

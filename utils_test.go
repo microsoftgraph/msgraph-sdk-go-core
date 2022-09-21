@@ -100,3 +100,94 @@ func TestCollectionApply(t *testing.T) {
 	assert.Equal(t, len(response), 3)
 	assert.Equal(t, response, []int{1, 2, 3})
 }
+
+func getEnumValue(parser serialization.EnumFactory) (interface{}, error) {
+	status := internal.ACTIVE
+	return &status, nil
+}
+
+func TestSetEnumValueValueValueWithoutError(t *testing.T) {
+	person := internal.NewPerson()
+	err := SetEnumValue(getEnumValue, internal.ParsePersonStatus, person.SetStatus)
+	assert.Nil(t, err)
+	assert.Equal(t, person.GetStatus().String(), internal.ACTIVE.String())
+}
+
+func getEnumValueWithError(parser serialization.EnumFactory) (interface{}, error) {
+	return nil, errors.New("could not get from factory")
+}
+
+func TestSetEnumValueValueValueWithError(t *testing.T) {
+	person := internal.NewPerson()
+	err := SetEnumValue(getEnumValueWithError, internal.ParsePersonStatus, person.SetStatus)
+	assert.NotNil(t, err)
+	assert.Nil(t, person.GetStatus())
+}
+
+func TestSetReferencedEnumValueValueValueWithoutError(t *testing.T) {
+	person := internal.NewPerson()
+	err := SetReferencedEnumValue(getEnumValue, internal.ParsePersonStatus, person.SetStatus)
+	assert.Nil(t, err)
+	assert.Equal(t, person.GetStatus().String(), internal.ACTIVE.String())
+}
+
+func TestSetReferencedEnumValueValueValueWithError(t *testing.T) {
+	person := internal.NewPerson()
+	err := SetEnumValue(getEnumValueWithError, internal.ParsePersonStatus, person.SetStatus)
+	assert.NotNil(t, err)
+	assert.Nil(t, person.GetStatus())
+}
+
+func TestSetCollectionOfReferencedEnumValueWithoutError(t *testing.T) {
+	person := internal.NewPerson()
+
+	slice := []interface{}{Point(internal.ACTIVE), Point(internal.SUSPEND)}
+	enumSource := func(parser serialization.EnumFactory) ([]interface{}, error) {
+		return slice, nil
+	}
+
+	err := SetCollectionOfReferencedEnumValue(enumSource, internal.ParsePersonStatus, person.SetPreviousStatus)
+	assert.Nil(t, err)
+	assert.Equal(t, person.GetPreviousStatus()[0].String(), internal.ACTIVE.String())
+	assert.Equal(t, person.GetPreviousStatus()[1].String(), internal.SUSPEND.String())
+}
+
+func TestSetCollectionOfReferencedEnumValueWithError(t *testing.T) {
+	person := internal.NewPerson()
+
+	slice := []interface{}{Point(internal.ACTIVE), Point(internal.SUSPEND)}
+	enumSource := func(parser serialization.EnumFactory) ([]interface{}, error) {
+		return slice, nil
+	}
+
+	err := SetCollectionOfReferencedEnumValue(enumSource, internal.ParsePersonStatus, person.SetPreviousStatus)
+	assert.NotNil(t, err)
+	assert.Nil(t, person.GetPreviousStatus())
+}
+
+func TestSetSetCollectionOfPrimitiveValueWithoutError(t *testing.T) {
+	person := internal.NewPerson()
+
+	slice := []interface{}{Point(1), Point(2), Point(3)}
+	dataSource := func(targetType string) ([]interface{}, error) {
+		return slice, nil
+	}
+
+	err := SetCollectionOfReferencedPrimitiveValue(dataSource, "int", person.SetCardNumbers)
+	assert.Nil(t, err)
+	assert.Equal(t, person.GetCardNumbers()[0], 1)
+	assert.Equal(t, person.GetCardNumbers()[1], 2)
+	assert.Equal(t, person.GetCardNumbers()[2], 3)
+}
+
+func TestSetSetCollectionOfPrimitiveValueWithError(t *testing.T) {
+	person := internal.NewPerson()
+
+	dataSource := func(targetType string) ([]interface{}, error) {
+		return nil, errors.New("could not get from factory")
+	}
+
+	err := SetCollectionOfReferencedPrimitiveValue(dataSource, "int", person.SetCardNumbers)
+	assert.NotNil(t, err)
+	assert.Nil(t, person.GetCardNumbers())
+}

@@ -1,9 +1,12 @@
 package internal
 
 type Person struct {
-	DisplayName *string
-	callRecord  *CallRecord
-	callRecords []*CallRecord
+	DisplayName    *string
+	callRecord     *CallRecord
+	callRecords    []*CallRecord
+	status         *PersonStatus
+	previousStatus []*PersonStatus
+	cardNumbers    []int
 }
 
 func NewPerson() *Person {
@@ -32,4 +35,28 @@ func (u *Person) SetCallRecords(records []*CallRecord) {
 
 func (u *Person) GetCallRecords() []*CallRecord {
 	return u.callRecords
+}
+
+func (u *Person) SetStatus(personStatus *PersonStatus) {
+	u.status = personStatus
+}
+
+func (u *Person) GetStatus() *PersonStatus {
+	return u.status
+}
+
+func (u *Person) SetPreviousStatus(previousStatus []*PersonStatus) {
+	u.previousStatus = previousStatus
+}
+
+func (u *Person) GetPreviousStatus() []*PersonStatus {
+	return u.previousStatus
+}
+
+func (u *Person) SetCardNumbers(numbers []int) {
+	u.cardNumbers = numbers
+}
+
+func (u *Person) GetCardNumbers() []int {
+	return u.cardNumbers
 }

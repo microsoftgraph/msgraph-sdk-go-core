@@ -158,3 +158,7 @@ func SetCollectionOfReferencedPrimitiveValue[T interface{}](source func(targetTy
 	}
 	return nil
 }
+
+func Point[T interface{}](t T) *T {
+	return &t
+}

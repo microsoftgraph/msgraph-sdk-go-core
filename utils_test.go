@@ -133,7 +133,7 @@ func TestSetReferencedEnumValueValueValueWithoutError(t *testing.T) {
 
 func TestSetReferencedEnumValueValueValueWithError(t *testing.T) {
 	person := internal.NewPerson()
-	err := SetEnumValue(getEnumValueWithError, internal.ParsePersonStatus, person.SetStatus)
+	err := SetReferencedEnumValue(getEnumValueWithError, internal.ParsePersonStatus, person.SetStatus)
 	assert.NotNil(t, err)
 	assert.Nil(t, person.GetStatus())
 }
@@ -203,6 +203,7 @@ func TestSetCollectionOfPrimitiveValueWithoutError(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, person.GetCardNumbers()[0], 1)
 	assert.Equal(t, person.GetCardNumbers()[1], 2)
+	assert.Equal(t, person.GetCardNumbers()[1], 2)
 	assert.Equal(t, person.GetCardNumbers()[2], 3)
 }
 
@@ -216,4 +217,13 @@ func TestSetCollectionOfPrimitiveValueWithError(t *testing.T) {
 	err := SetCollectionOfPrimitiveValue(dataSource, "int", person.SetCardNumbers)
 	assert.NotNil(t, err)
 	assert.Nil(t, person.GetCardNumbers())
+}
+
+func TestGetValueReturn(t *testing.T) {
+	person := internal.NewPerson()
+
+	assert.Equal(t, GetValueOrDefault(person.GetDisplayName, "Unknown"), "Unknown")
+
+	person.SetDisplayName(Point("Jane"))
+	assert.Equal(t, GetValueOrDefault(person.GetDisplayName, "Unknown"), "Jane")
 }

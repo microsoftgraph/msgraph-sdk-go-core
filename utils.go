@@ -162,3 +162,12 @@ func SetCollectionOfReferencedPrimitiveValue[T interface{}](source func(targetTy
 func Point[T interface{}](t T) *T {
 	return &t
 }
+
+func GetValueOrDefault[T interface{}](source func() *T, defaultValue T) T {
+	result := source()
+	if result != nil {
+		return *result
+	} else {
+		return defaultValue
+	}
+}

@@ -155,9 +155,8 @@ func TestSetCollectionOfReferencedEnumValueWithoutError(t *testing.T) {
 func TestSetCollectionOfReferencedEnumValueWithError(t *testing.T) {
 	person := internal.NewPerson()
 
-	slice := []interface{}{Point(internal.ACTIVE), Point(internal.SUSPEND)}
 	enumSource := func(parser serialization.EnumFactory) ([]interface{}, error) {
-		return slice, nil
+		return nil, errors.New("could not get from factory")
 	}
 
 	err := SetCollectionOfReferencedEnumValue(enumSource, internal.ParsePersonStatus, person.SetPreviousStatus)
@@ -165,7 +164,7 @@ func TestSetCollectionOfReferencedEnumValueWithError(t *testing.T) {
 	assert.Nil(t, person.GetPreviousStatus())
 }
 
-func TestSetSetCollectionOfPrimitiveValueWithoutError(t *testing.T) {
+func TestSetCollectionOfReferencedPrimitiveValueWithoutError(t *testing.T) {
 	person := internal.NewPerson()
 
 	slice := []interface{}{Point(1), Point(2), Point(3)}
@@ -180,7 +179,7 @@ func TestSetSetCollectionOfPrimitiveValueWithoutError(t *testing.T) {
 	assert.Equal(t, person.GetCardNumbers()[2], 3)
 }
 
-func TestSetSetCollectionOfPrimitiveValueWithError(t *testing.T) {
+func TestSetCollectionOfReferencedPrimitiveValueWithError(t *testing.T) {
 	person := internal.NewPerson()
 
 	dataSource := func(targetType string) ([]interface{}, error) {
@@ -188,6 +187,33 @@ func TestSetSetCollectionOfPrimitiveValueWithError(t *testing.T) {
 	}
 
 	err := SetCollectionOfReferencedPrimitiveValue(dataSource, "int", person.SetCardNumbers)
+	assert.NotNil(t, err)
+	assert.Nil(t, person.GetCardNumbers())
+}
+
+func TestSetCollectionOfPrimitiveValueWithoutError(t *testing.T) {
+	person := internal.NewPerson()
+
+	slice := []interface{}{1, 2, 3}
+	dataSource := func(targetType string) ([]interface{}, error) {
+		return slice, nil
+	}
+
+	err := SetCollectionOfPrimitiveValue(dataSource, "int", person.SetCardNumbers)
+	assert.Nil(t, err)
+	assert.Equal(t, person.GetCardNumbers()[0], 1)
+	assert.Equal(t, person.GetCardNumbers()[1], 2)
+	assert.Equal(t, person.GetCardNumbers()[2], 3)
+}
+
+func TestSetCollectionOfPrimitiveValueWithError(t *testing.T) {
+	person := internal.NewPerson()
+
+	dataSource := func(targetType string) ([]interface{}, error) {
+		return nil, errors.New("could not get from factory")
+	}
+
+	err := SetCollectionOfPrimitiveValue(dataSource, "int", person.SetCardNumbers)
 	assert.NotNil(t, err)
 	assert.Nil(t, person.GetCardNumbers())
 }

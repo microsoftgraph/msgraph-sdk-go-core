@@ -64,3 +64,97 @@ func CollectionApply[T any, R interface{}](collection []T, mutator func(t T) R) 
 	}
 	return cast
 }
+
+// SetEnumValue is a utility function that receives an enum getter , EnumFactory and applies the results to a setter
+//
+// source is any function that receives a `EnumFactory` and returns an interface or error
+// parser is an EnumFactory
+// setter is a recipient of the function results
+func SetEnumValue[T interface{}](source func(parser serialization.EnumFactory) (interface{}, error), parser serialization.EnumFactory, setter func(t T)) error {
+	val, err := source(parser)
+	if err != nil {
+		return err
+	}
+	if val != nil {
+		res := (val).(T)
+		setter(res)
+	}
+	return nil
+}
+
+// SetReferencedEnumValue is a utility function that receives an enum getter , EnumFactory and applies a de-referenced result of the factory to a setter
+//
+// source is any function that receives a `EnumFactory` and returns an interface or error
+// parser is an EnumFactory
+// setter is a recipient of the function results
+func SetReferencedEnumValue[T interface{}](source func(parser serialization.EnumFactory) (interface{}, error), parser serialization.EnumFactory, setter func(t *T)) error {
+	val, err := source(parser)
+	if err != nil {
+		return err
+	}
+	if val != nil {
+		res := (val).(*T)
+		setter(res)
+	}
+	return nil
+}
+
+// SetCollectionOfReferencedEnumValue is a utility function that receives an enum collection source , EnumFactory and applies a de-referenced result of the factory to a setter
+//
+// source is any function that receives a `EnumFactory` and returns an interface or error
+// parser is an EnumFactory
+// setter is a recipient of the function results
+func SetCollectionOfReferencedEnumValue[T interface{}](source func(parser serialization.EnumFactory) ([]interface{}, error), parser serialization.EnumFactory, setter func(t []*T)) error {
+	val, err := source(parser)
+	if err != nil {
+		return err
+	}
+	if val != nil {
+		res := make([]*T, len(val))
+		for i, v := range val {
+			res[i] = (v).(*T)
+		}
+		setter(res)
+	}
+	return nil
+}
+
+// SetCollectionOfPrimitiveValue is a utility function that receives a collection of primitives , targetType and applies the result of the factory to a setter
+//
+// source is any function that receives a `EnumFactory` and returns an interface or error
+// targetType is a string representing the type of result
+// setter is a recipient of the function results
+func SetCollectionOfPrimitiveValue[T interface{}](source func(targetType string) ([]interface{}, error), targetType string, setter func(t []T)) error {
+	val, err := source(targetType)
+	if err != nil {
+		return err
+	}
+	if val != nil {
+		res := make([]T, len(val))
+		for i, v := range val {
+			res[i] = v.(T)
+		}
+		setter(res)
+	}
+	return nil
+}
+
+// SetCollectionOfReferencedPrimitiveValue is a utility function that receives a collection of primitives , targetType and applies the re-referenced result of the factory to a setter
+//
+// source is any function that receives a `EnumFactory` and returns an interface or error
+// parser is an EnumFactory
+// setter is a recipient of the function results
+func SetCollectionOfReferencedPrimitiveValue[T interface{}](source func(targetType string) ([]interface{}, error), targetType string, setter func(t []T)) error {
+	val, err := source(targetType)
+	if err != nil {
+		return err
+	}
+	if val != nil {
+		res := make([]T, len(val))
+		for i, v := range val {
+			res[i] = *(v.(*T))
+		}
+		setter(res)
+	}
+	return nil
+}

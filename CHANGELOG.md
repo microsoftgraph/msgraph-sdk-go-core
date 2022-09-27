@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.29.0]- 2022-09-27
+
+### Changed
+
+- Updated dependencies for additional serialization methods.
+
 ## [0.28.1]- 2022-09-09
 
 ### Changed

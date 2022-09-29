@@ -165,6 +165,10 @@ func (bi *batchItem) GetFieldDeserializers() map[string]func(serialization.Parse
 			return err
 		}
 
+		if rawVal == nil {
+			return nil
+		}
+
 		result, err := castMapOfStrings(rawVal)
 		if err != nil {
 			return err

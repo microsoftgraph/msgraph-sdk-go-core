@@ -19,37 +19,37 @@ func p[T any](t T) *T {
 	return &t
 }
 
-func TestGeneratesJSONFromRequestBody(t *testing.T) {
+func TestConstructionOfRequests(t *testing.T) {
 	reqInfo := getRequestInfo()
 
 	batch := NewBatchRequest()
-	item, _ := batch.AppendBatchItem(*reqInfo)
-	item.SetId(p("1"))
 
-	expected := "{\"requests\":[{\"id\":\"1\",\"method\":\"GET\",\"url\":\"\",\"headers\":{\"content-type\":\"application/json\"},\"body\":{\"username\":\"name\"},\"dependsOn\":[]}]}"
-	actual, _ := batch.toJson()
+	item1, err := batch.AddBatchRequestStep(*reqInfo)
+	require.NoError(t, err)
 
-	assert.Equal(t, expected, string(actual))
+	item2, err := batch.AddBatchRequestStep(*reqInfo)
+	require.NoError(t, err)
+
+	assert.Equal(t, len(batch.GetRequests()), 2)
+	assert.Equal(t, batch.GetRequests()[0], item1)
+	assert.Equal(t, batch.GetRequests()[1], item2)
 }
 
-func TestDependsOnRelationshipInBatchRequestItems(t *testing.T) {
+func TestRegisteringDependsOn(t *testing.T) {
 
 	reqInfo1 := getRequestInfo()
 	reqInfo2 := getRequestInfo()
 
 	batch := NewBatchRequest()
-	batchItem1, _ := batch.AppendBatchItem(*reqInfo1)
-	batchItem2, _ := batch.AppendBatchItem(*reqInfo2)
-	batchItem1.SetId(p("1"))
-	batchItem2.SetId(p("2"))
+	batchItem1, err := batch.AddBatchRequestStep(*reqInfo1)
+	require.NoError(t, err)
+
+	batchItem2, err := batch.AddBatchRequestStep(*reqInfo2)
+	require.NoError(t, err)
 
 	batchItem2.DependsOnItem(batchItem1)
 
-	expected := "{\"requests\":[{\"id\":\"1\",\"method\":\"GET\",\"url\":\"\",\"headers\":{\"content-type\":\"application/json\"},\"body\":{\"username\":\"name\"},\"dependsOn\":[]},{\"id\":\"2\",\"method\":\"GET\",\"url\":\"\",\"headers\":{\"content-type\":\"application/json\"},\"body\":{\"username\":\"name\"},\"dependsOn\":[\"1\"]}]}"
-	actual, err := batch.toJson()
-	require.NoError(t, err)
-
-	assert.Equal(t, expected, string(actual))
+	assert.Equal(t, batchItem2.GetDependsOn(), []string{*batchItem1.GetId()})
 }
 
 func TestReturnsBatchResponse(t *testing.T) {
@@ -61,12 +61,14 @@ func TestReturnsBatchResponse(t *testing.T) {
 	}))
 	defer testServer.Close()
 
-	mockPath := testServer.URL + "/$batch"
-	reqAdapter.SetBaseUrl(mockPath)
-
 	reqInfo := getRequestInfo()
+
+	mockPath := testServer.URL + "/$batch"
+	reqAdapter.SetBaseUrl(mockPath) // check that path is not empty instead
+
 	batch := NewBatchRequest()
-	batch.AppendBatchItem(*reqInfo)
+	_, err := batch.AddBatchRequestStep(*reqInfo)
+	require.NoError(t, err)
 
 	resp, err := batch.Send(context.Background(), reqAdapter)
 	require.NoError(t, err)
@@ -79,11 +81,14 @@ func TestRespectsBatchItemLimitOf20BatchItems(t *testing.T) {
 	reqInfo := getRequestInfo()
 
 	for i := 0; i < 20; i++ {
-		batch.AppendBatchItem(*reqInfo)
+		_, err := batch.AddBatchRequestStep(*reqInfo)
+		if err != nil {
+			return
+		}
 	}
 
-	_, err := batch.AppendBatchItem(*reqInfo)
-	assert.Equal(t, err.Error(), "Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
+	_, err := batch.AddBatchRequestStep(*reqInfo)
+	assert.Equal(t, err.Error(), "batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 }
 
 func TestHandlesUnhandledHTTPError(t *testing.T) {
@@ -99,9 +104,10 @@ func TestHandlesUnhandledHTTPError(t *testing.T) {
 
 	reqInfo := getRequestInfo()
 	batch := NewBatchRequest()
-	batch.AppendBatchItem(*reqInfo)
+	_, err := batch.AddBatchRequestStep(*reqInfo)
+	require.NoError(t, err)
 
-	_, err := batch.Send(context.Background(), reqAdapter)
+	_, err = batch.Send(context.Background(), reqAdapter)
 	assert.Equal(t, err.Error(), "The server returned an unexpected status code and no error factory is registered for this code: 403")
 }
 
@@ -118,7 +124,7 @@ func TestHandlesHTTPError(t *testing.T) {
 
 	reqInfo := getRequestInfo()
 	batch := NewBatchRequest()
-	batch.AppendBatchItem(*reqInfo)
+	batch.AddBatchRequestStep(*reqInfo)
 
 	errorMapping := abstractions.ErrorMappings{
 		"4XX": internal.CreateSampleErrorFromDiscriminatorValue,
@@ -142,15 +148,31 @@ func TestHandlesHTTPError(t *testing.T) {
 func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 	mockResponse := `{
 			"responses": [
-				{
-					"id": "2",
-					"status": 200,
-					"body": {
-						"username": "testuser"
-					}
+			  {
+				"id": "2",
+				"status": 200,
+				"body": {
+				  "username": "testuser",
+				  "person" : {
+					"firstName" : "Tony",
+					"lastName" : "Blair",
+					"active" : false,
+					"positions" : ["Prime","Minister"],
+					"children" : [
+					  {
+						"firstName" : "Kathryn",
+						"lastName" : "Blair"
+					  },
+					  {
+						"firstName" : "Euan",
+						"lastName" : "Blair"
+					  }
+					]
+				  }
 				}
+			  }
 			]
-		}`
+		  }`
 	mockServer := makeMockRequest(200, mockResponse)
 	defer mockServer.Close()
 
@@ -159,7 +181,7 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 
 	reqInfo := getRequestInfo()
 	batch := NewBatchRequest()
-	_, err := batch.AppendBatchItem(*reqInfo)
+	_, err := batch.AddBatchRequestStep(*reqInfo)
 	if err != nil {
 		return
 	}
@@ -175,6 +197,7 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 
 type User struct {
 	UserName string `json:"username"`
+	Person   Person `json:"person"`
 }
 
 func (u User) Serialize(writer serialization.SerializationWriter) error {
@@ -182,6 +205,22 @@ func (u User) Serialize(writer serialization.SerializationWriter) error {
 }
 
 func (u User) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	panic("implement me")
+}
+
+type Person struct {
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+	Active    bool      `json:"active"`
+	Positions []*string `json:"positions"`
+	Children  []*Person `json:"children"`
+}
+
+func (u Person) Serialize(writer serialization.SerializationWriter) error {
+	panic("implement me")
+}
+
+func (u Person) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
 	panic("implement me")
 }
 
@@ -194,14 +233,14 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 
 	reqInfo := getRequestInfo()
 	batch := NewBatchRequest()
-	_, err := batch.AppendBatchItem(*reqInfo)
+	_, err := batch.AddBatchRequestStep(*reqInfo)
 	require.NoError(t, err)
 
 	resp, err := batch.Send(context.Background(), reqAdapter)
 	require.NoError(t, err)
 
 	_, err = GetBatchResponseById[User](resp, "3")
-	assert.Equal(t, "Code: Forbidden \n Message: Insufficient permissions", err.Error())
+	assert.Equal(t, "The server returned an unexpected status code and no error factory is registered for this code: 401", err.Error())
 }
 
 func makeMockRequest(mockStatus int, mockResponse string) *httptest.Server {
@@ -221,6 +260,7 @@ func getRequestInfo() *abstractions.RequestInformation {
 	reqInfo := abstractions.NewRequestInformation()
 	reqInfo.SetUri(url.URL{})
 	reqInfo.Content = []byte(content)
+	reqInfo.UrlTemplate = "{+baseurl}/$batch"
 	reqInfo.Headers = map[string]string{"content-type": "application/json"}
 
 	return reqInfo
@@ -232,6 +272,7 @@ func getDummyJSON() string {
 	{
 	  "id": "1",
 	  "status": 302,
+	  "body": null,
 	  "headers": {
 	    "location": "https://b0mpua-by3301.files.1drv.com/y23vmagahszhxzlcvhasdhasghasodfi"
 	  }
@@ -257,6 +298,7 @@ func getDummyJSON() string {
 	{
 	  "id": "4",
 	  "status": 204,
+	  "url": "https://graph.microsoft.com/v1.0/$metadata#Collection(microsoft.graph.plannerTask)",
 	  "body": null
 	}
 	]

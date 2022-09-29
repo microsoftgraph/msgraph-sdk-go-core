@@ -24,3 +24,5 @@ retract (
 	v0.0.14
 // contains retraction only
 )
+
+replace	github.com/microsoft/kiota-serialization-json-go => C:\Users\ronaldkudoyi\Code\kiota-serialization-json-go

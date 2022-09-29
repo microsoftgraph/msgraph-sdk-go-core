@@ -6,62 +6,101 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
+	"github.com/google/uuid"
+	abs "github.com/microsoft/kiota-abstractions-go"
+	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
+	absser "github.com/microsoft/kiota-abstractions-go/serialization"
 	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
-	abstractions "github.com/microsoft/kiota-abstractions-go"
-	absser "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 const BATCH_REQUEST_ERROR_REGISTRY_KEY = "BATCH_REQUEST_ERROR_REGISTRY_KEY"
 
-// Send sends a batch request
-func (br *batchRequest) Send(ctx context.Context, adapter abstractions.RequestAdapter) (BatchResponse, error) {
-	batchJsonBody, err := br.toJson()
-	if err != nil {
-		return nil, err
+type Header map[string]string
+
+func (br Header) Serialize(writer serialization.SerializationWriter) error {
+	if br != nil {
+		for key, element := range br {
+			err := writer.WriteStringValue(key, &element)
+			if err != nil {
+				return err
+			}
+		}
 	}
+	return nil
+}
 
-	baseUrl, err := getBaseUrl(adapter)
-	if err != nil {
-		return nil, err
+func (br Header) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	return make(map[string]func(serialization.ParseNode) error)
+}
+
+type RequestBody map[string]interface{}
+
+func (br RequestBody) Serialize(writer serialization.SerializationWriter) error {
+	if br != nil {
+		err := writer.WriteAdditionalData(br)
+		if err != nil {
+			return err
+		}
 	}
-
-	requestInfo := buildRequestInfo(batchJsonBody, baseUrl)
-	return sendBatchRequest(ctx, requestInfo, adapter)
+	return nil
 }
 
-func (br *batchRequest) toJson() ([]byte, error) {
-	return json.Marshal(br)
+func (br RequestBody) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	return make(map[string]func(serialization.ParseNode) error)
 }
 
-func getBaseUrl(adapter abstractions.RequestAdapter) (*url.URL, error) {
-	return url.Parse(adapter.GetBaseUrl())
+type batchRequest struct {
+	requests []BatchItem
 }
 
-func buildRequestInfo(jsonBody []byte, baseUrl *url.URL) *abstractions.RequestInformation {
-	requestInfo := abstractions.NewRequestInformation()
+// NewBatchRequest creates an instance of BatchRequest
+func NewBatchRequest() BatchRequest {
+	return &batchRequest{}
+}
 
-	requestInfo.SetStreamContent(jsonBody)
-	requestInfo.Method = abstractions.POST
-	requestInfo.SetUri(*baseUrl)
-	requestInfo.Headers = map[string]string{
-		"Content-Type": "application/json",
+type BatchRequest interface {
+	serialization.Parsable
+	GetRequests() []BatchItem
+	SetRequests(requests []BatchItem)
+	AddBatchRequestStep(reqInfo abstractions.RequestInformation) (BatchItem, error)
+	Send(ctx context.Context, adapter abstractions.RequestAdapter) (BatchResponse, error)
+}
+
+func (br *batchRequest) GetRequests() []BatchItem {
+	return br.requests
+}
+
+func (br *batchRequest) SetRequests(requests []BatchItem) {
+	br.requests = requests
+}
+
+func (br *batchRequest) Serialize(writer serialization.SerializationWriter) error {
+	{
+		cast := abs.CollectionApply(br.requests, func(v BatchItem) serialization.Parsable {
+			return v.(serialization.Parsable)
+		})
+		err := writer.WriteCollectionOfObjectValues("requests", cast)
+		if err != nil {
+			return err
+		}
 	}
-
-	return requestInfo
+	return nil
 }
 
-// AppendBatchItem converts RequestInformation to a BatchItem and adds it to a BatchRequest
+func (br *batchRequest) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	return make(map[string]func(serialization.ParseNode) error)
+}
+
+// AddItem converts RequestInformation to a BatchItem and adds it to a BatchRequest
 //
 // You can add upto 20 BatchItems to a BatchRequest
-func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation) (BatchItem, error) {
-	if len(br.Requests) > 19 {
-		return nil, errors.New("Batch items limit exceeded. BatchRequest has a limit of 20 batch items")
+func (br *batchRequest) AddBatchRequestStep(reqInfo abstractions.RequestInformation) (BatchItem, error) {
+	if len(br.GetRequests()) > 19 {
+		return nil, errors.New("batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
 
 	batchItem, err := toBatchItem(reqInfo)
@@ -69,16 +108,67 @@ func (br *batchRequest) AppendBatchItem(reqInfo abstractions.RequestInformation)
 		return nil, err
 	}
 
-	br.Requests = append(br.Requests, batchItem)
+	br.SetRequests(append(br.GetRequests(), batchItem))
 	return batchItem, nil
 }
 
-// DependsOnItem creates a dependency chain between BatchItems.If A depends on B, then B will be sent before B
-// A batchItem can only depend on one other batchItem
-// see: https://docs.microsoft.com/en-us/graph/known-issues#request-dependencies-are-limited
-func (bi *batchItem) DependsOnItem(item BatchItem) {
-	// DependsOn is a errorRegistry value slice
-	bi.DependsOn = []string{*item.GetId()}
+func toBatchItem(requestInfo abstractions.RequestInformation) (BatchItem, error) {
+	uri, err := requestInfo.GetUri()
+	if err != nil {
+		return nil, err
+	}
+
+	var body map[string]interface{}
+	err = json.Unmarshal(requestInfo.Content, &body)
+	if err != nil {
+		return nil, err
+	}
+
+	newID := uuid.NewString()
+	method := requestInfo.Method.String()
+
+	request := NewBatchItem()
+	request.SetId(&newID)
+	request.SetMethod(&method)
+	request.SetBody(body)
+	request.SetHeaders(requestInfo.Headers)
+	request.SetUrl(&uri.Path)
+
+	return request, nil
+}
+
+// Send sends a batch request
+func (br *batchRequest) Send(ctx context.Context, adapter abstractions.RequestAdapter) (BatchResponse, error) {
+	baseUrl, err := getBaseUrl(adapter)
+	if err != nil {
+		return nil, err
+	}
+
+	requestInfo, err := buildRequestInfo(adapter, br, baseUrl)
+	if err != nil {
+		return nil, err
+	}
+	return sendBatchRequest(ctx, requestInfo, adapter)
+}
+
+func getBaseUrl(adapter abstractions.RequestAdapter) (*url.URL, error) {
+	return url.Parse(adapter.GetBaseUrl())
+}
+
+func buildRequestInfo(adapter abstractions.RequestAdapter, body *batchRequest, baseUrl *url.URL) (*abstractions.RequestInformation, error) {
+	requestInfo := abstractions.NewRequestInformation()
+	requestInfo.Method = abstractions.POST
+	requestInfo.UrlTemplate = "{+baseurl}/$batch"
+	requestInfo.SetUri(*baseUrl)
+	err := requestInfo.SetContentFromParsable(adapter, "application/json", body)
+	if err != nil {
+		return nil, err
+	}
+	requestInfo.Headers = map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	return requestInfo, nil
 }
 
 func getResponsePrimaryContentType(responseItem BatchItem) string {
@@ -153,7 +243,6 @@ func GetBatchResponseById[T serialization.Parsable](resp BatchResponse, itemId s
 		typeName := reflect.TypeOf(res).Name()
 		return nil, throwErrors(item, typeName)
 	}
-
 	jsonStr, err := json.Marshal(item.GetBody())
 	if err != nil {
 		return &res, err
@@ -164,36 +253,6 @@ func GetBatchResponseById[T serialization.Parsable](resp BatchResponse, itemId s
 	}
 
 	return &res, nil
-}
-
-// NewBatchRequest creates an instance of BatchRequest
-func NewBatchRequest() *batchRequest {
-	return &batchRequest{}
-}
-
-func toBatchItem(requestInfo abstractions.RequestInformation) (*batchItem, error) {
-	uri, err := requestInfo.GetUri()
-	if err != nil {
-		return nil, err
-	}
-
-	var body map[string]interface{}
-	err = json.Unmarshal(requestInfo.Content, &body)
-	if err != nil {
-		return nil, err
-	}
-
-	newID := uuid.NewString()
-	method := requestInfo.Method.String()
-
-	return &batchItem{
-		Id:        &newID,
-		method:    &method,
-		Body:      body,
-		Headers:   requestInfo.Headers,
-		Url:       &uri.Path,
-		DependsOn: make([]string, 0),
-	}, nil
 }
 
 func getErrorMapper(key string) abstractions.ErrorMappings {

@@ -197,6 +197,9 @@ func getRootParseNode(responseItem BatchItem) (absser.ParseNode, error) {
 
 func throwErrors(responseItem BatchItem, typeName string) error {
 	errorMappings := getErrorMapper(typeName)
+	if errorMappings == nil {
+		errorMappings = getErrorMapper(BATCH_REQUEST_ERROR_REGISTRY_KEY)
+	}
 	responseStatus := *responseItem.GetStatus()
 
 	statusAsString := strconv.Itoa(int(responseStatus))
@@ -238,11 +241,10 @@ func GetBatchResponseById[T serialization.Parsable](resp BatchResponse, itemId s
 	var res T
 	item := resp.GetResponseById(itemId)
 
-	hasError := *item.GetStatus() >= 400 && *item.GetStatus() < 600
-	if hasError {
-		typeName := reflect.TypeOf(res).Name()
-		return nil, throwErrors(item, typeName)
+	if *item.GetStatus() >= 400 {
+		return nil, throwErrors(item, reflect.TypeOf(res).Name())
 	}
+
 	jsonStr, err := json.Marshal(item.GetBody())
 	if err != nil {
 		return &res, err

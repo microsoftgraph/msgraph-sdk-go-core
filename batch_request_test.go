@@ -132,17 +132,13 @@ func TestHandlesHTTPError(t *testing.T) {
 	}
 	// register errorMapper
 	err := RegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY, errorMapping)
-	if err != nil {
-		return
-	}
+	require.NoError(t, err)
 
 	_, err = batch.Send(context.Background(), reqAdapter)
 	assert.Equal(t, err.Error(), "content is empty")
 
 	err = DeRegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY)
-	if err != nil {
-		return
-	} // global
+	require.NoError(t, err)
 }
 
 func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
@@ -240,7 +236,7 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = GetBatchResponseById[User](resp, "3")
-	assert.Equal(t, "The server returned an unexpected status code and no error factory is registered for this code: 401", err.Error())
+	assert.Equal(t, "The server returned an unexpected status code with no response body: 401", err.Error())
 }
 
 func makeMockRequest(mockStatus int, mockResponse string) *httptest.Server {

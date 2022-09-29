@@ -22,14 +22,6 @@ const BATCH_REQUEST_ERROR_REGISTRY_KEY = "BATCH_REQUEST_ERROR_REGISTRY_KEY"
 type Header map[string]string
 
 func (br Header) Serialize(writer serialization.SerializationWriter) error {
-	if br != nil {
-		for key, element := range br {
-			err := writer.WriteStringValue(key, &element)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
 
@@ -40,12 +32,6 @@ func (br Header) GetFieldDeserializers() map[string]func(serialization.ParseNode
 type RequestBody map[string]interface{}
 
 func (br RequestBody) Serialize(writer serialization.SerializationWriter) error {
-	if br != nil {
-		err := writer.WriteAdditionalData(br)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -155,7 +141,7 @@ func getBaseUrl(adapter abstractions.RequestAdapter) (*url.URL, error) {
 	return url.Parse(adapter.GetBaseUrl())
 }
 
-func buildRequestInfo(adapter abstractions.RequestAdapter, body *batchRequest, baseUrl *url.URL) (*abstractions.RequestInformation, error) {
+func buildRequestInfo(adapter abstractions.RequestAdapter, body BatchRequest, baseUrl *url.URL) (*abstractions.RequestInformation, error) {
 	requestInfo := abstractions.NewRequestInformation()
 	requestInfo.Method = abstractions.POST
 	requestInfo.UrlTemplate = "{+baseurl}/$batch"

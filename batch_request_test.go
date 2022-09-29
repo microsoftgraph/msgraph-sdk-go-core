@@ -15,6 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func p[T interface{}](t T) *T {
+	return &t
+}
+
 func TestConstructionOfRequests(t *testing.T) {
 	reqInfo := getRequestInfo()
 
@@ -65,6 +69,40 @@ func TestReturnsBatchResponse(t *testing.T) {
 	batch := NewBatchRequest()
 	_, err := batch.AddBatchRequestStep(*reqInfo)
 	require.NoError(t, err)
+
+	resp, err := batch.Send(context.Background(), reqAdapter)
+	require.NoError(t, err)
+
+	assert.Equal(t, len(resp.GetResponses()), 4)
+}
+
+func TestContentSentToServer(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		jsonResponse := getDummyJSON()
+		w.WriteHeader(200)
+		fmt.Fprint(w, jsonResponse)
+	}))
+	defer testServer.Close()
+
+	reqInfo := getRequestInfo()
+
+	mockPath := testServer.URL + "/$batch"
+	reqAdapter.SetBaseUrl(mockPath) // check that path is not empty instead
+
+	batch := NewBatchRequest()
+	item, err := batch.AddBatchRequestStep(*reqInfo)
+	item.SetId(p("123"))
+	require.NoError(t, err)
+
+	baseUrl, err := getBaseUrl(reqAdapter)
+	require.NoError(t, err)
+
+	requestInfo, err := buildRequestInfo(reqAdapter, batch, baseUrl)
+	require.NoError(t, err)
+	content := string(requestInfo.Content)
+	expected := "{\"requests\":[{\"id\":\"123\",\"method\":\"GET\",\"url\":\"\",\"headers\":{\"content-type\":\"application/json\"},\"body\":{\"username\":\"name\"},\"dependsOn\":[]}]}"
+	assert.Equal(t, expected, content)
 
 	resp, err := batch.Send(context.Background(), reqAdapter)
 	require.NoError(t, err)

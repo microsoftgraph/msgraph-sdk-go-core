@@ -41,8 +41,8 @@ type batchItem struct {
 // A batchItem can only depend on one other batchItem
 // see: https://docs.microsoft.com/en-us/graph/known-issues#request-dependencies-are-limited
 func (bi *batchItem) DependsOnItem(item BatchItem) {
-	// DependsOn is a errorRegistry value slice
-	bi.DependsOn = []string{*item.GetId()}
+	dependsOn := append(item.GetDependsOn(), *item.GetId())
+	bi.SetDependsOn(dependsOn)
 }
 
 // NewBatchItem creates an instance of BatchItem

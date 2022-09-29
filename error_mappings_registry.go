@@ -43,11 +43,11 @@ func RegisterError(key string, value abstractions.ErrorMappings) error {
 func DeRegisterError(key string) error {
 	single := getInstance()
 	_, found := single.registry[key]
-	if !found {
+	if found {
 		delete(single.registry, key)
-		return errors.New("object Factory does not exist register")
-	} else {
 		return nil
+	} else {
+		return errors.New("object Factory does not exist register")
 	}
 }
 

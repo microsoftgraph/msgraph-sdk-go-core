@@ -46,18 +46,8 @@ type BatchResponse interface {
 	GetResponseById(itemId string) BatchItem
 }
 
-func (br *batchResponse) Serialize(writer serialization.SerializationWriter) error {
-	if br.GetResponses() != nil {
-		cast := make([]serialization.Parsable, len(br.GetResponses()))
-		for i, v := range br.GetResponses() {
-			cast[i] = v.(serialization.Parsable)
-		}
-		err := writer.WriteCollectionOfObjectValues("responses", cast)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func (br *batchResponse) Serialize(serialization.SerializationWriter) error {
+	panic("batch responses are not serializable")
 }
 
 func (br *batchResponse) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {

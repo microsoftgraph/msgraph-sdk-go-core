@@ -15,10 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func p[T any](t T) *T {
-	return &t
-}
-
 func TestConstructionOfRequests(t *testing.T) {
 	reqInfo := getRequestInfo()
 
@@ -153,6 +149,8 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 					"firstName" : "Tony",
 					"lastName" : "Blair",
 					"active" : false,
+					"bankBalance": 234234.67,
+					"accounts" : [1,2,3],
 					"positions" : ["Prime","Minister"],
 					"children" : [
 					  {
@@ -205,11 +203,13 @@ func (u User) GetFieldDeserializers() map[string]func(serialization.ParseNode) e
 }
 
 type Person struct {
-	FirstName string    `json:"firstName"`
-	LastName  string    `json:"lastName"`
-	Active    bool      `json:"active"`
-	Positions []*string `json:"positions"`
-	Children  []*Person `json:"children"`
+	FirstName   string    `json:"firstName"`
+	LastName    string    `json:"lastName"`
+	Active      bool      `json:"active"`
+	Positions   []*string `json:"positions"`
+	BankBalance *float64  `json:"bankBalance"`
+	Accounts    []*int    `json:"accounts"`
+	Children    []*Person `json:"children"`
 }
 
 func (u Person) Serialize(writer serialization.SerializationWriter) error {
@@ -236,7 +236,37 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = GetBatchResponseById[User](resp, "3")
+	assert.Equal(t, "The server returned an unexpected status code and no error factory is registered for this code: 401", err.Error())
+}
+
+func TestGetResponseByIdFailedRequestWithFactory(t *testing.T) {
+	mockServer := makeMockRequest(200, getDummyJSON())
+	defer mockServer.Close()
+
+	mockPath := mockServer.URL + "/$batch"
+	reqAdapter.SetBaseUrl(mockPath)
+
+	errorMapping := abstractions.ErrorMappings{
+		"4XX": internal.CreateSampleErrorFromDiscriminatorValue,
+		"5XX": internal.CreateSampleErrorFromDiscriminatorValue,
+	}
+	// register errorMapper
+	err := RegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY, errorMapping)
+	require.NoError(t, err)
+
+	reqInfo := getRequestInfo()
+	batch := NewBatchRequest()
+	_, err = batch.AddBatchRequestStep(*reqInfo)
+	require.NoError(t, err)
+
+	resp, err := batch.Send(context.Background(), reqAdapter)
+	require.NoError(t, err)
+
+	_, err = GetBatchResponseById[User](resp, "3")
 	assert.Equal(t, "The server returned an unexpected status code with no response body: 401", err.Error())
+
+	err = DeRegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY)
+	require.NoError(t, err)
 }
 
 func makeMockRequest(mockStatus int, mockResponse string) *httptest.Server {

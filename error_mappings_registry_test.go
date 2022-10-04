@@ -9,13 +9,13 @@ import (
 
 func TestRegistration(t *testing.T) {
 	errorMapping := abstractions.ErrorMappings{}
-	err := RegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY, errorMapping)
+	err := RegisterError(BatchRequestErrorRegistryKey, errorMapping)
 	require.NoError(t, err)
-	err = RegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY, errorMapping)
+	err = RegisterError(BatchRequestErrorRegistryKey, errorMapping)
 	assert.Equal(t, err.Error(), "object Factory already register")
 
-	err = DeRegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY)
+	err = DeRegisterError(BatchRequestErrorRegistryKey)
 	require.NoError(t, err)
-	err = DeRegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY)
+	err = DeRegisterError(BatchRequestErrorRegistryKey)
 	assert.Equal(t, err.Error(), "object Factory does not exist register")
 }

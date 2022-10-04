@@ -165,13 +165,13 @@ func TestHandlesHTTPError(t *testing.T) {
 		"5XX": internal.CreateSampleErrorFromDiscriminatorValue,
 	}
 	// register errorMapper
-	err := RegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY, errorMapping)
+	err := RegisterError(BatchRequestErrorRegistryKey, errorMapping)
 	require.NoError(t, err)
 
 	_, err = batch.Send(context.Background(), reqAdapter)
 	assert.Equal(t, err.Error(), "content is empty")
 
-	err = DeRegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY)
+	err = DeRegisterError(BatchRequestErrorRegistryKey)
 	require.NoError(t, err)
 }
 
@@ -289,7 +289,7 @@ func TestGetResponseByIdFailedRequestWithFactory(t *testing.T) {
 		"5XX": internal.CreateSampleErrorFromDiscriminatorValue,
 	}
 	// register errorMapper
-	err := RegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY, errorMapping)
+	err := RegisterError(BatchRequestErrorRegistryKey, errorMapping)
 	require.NoError(t, err)
 
 	reqInfo := getRequestInfo()
@@ -303,7 +303,7 @@ func TestGetResponseByIdFailedRequestWithFactory(t *testing.T) {
 	_, err = GetBatchResponseById[User](resp, "3")
 	assert.Equal(t, "The server returned an unexpected status code with no response body: 401", err.Error())
 
-	err = DeRegisterError(BATCH_REQUEST_ERROR_REGISTRY_KEY)
+	err = DeRegisterError(BatchRequestErrorRegistryKey)
 	require.NoError(t, err)
 }
 

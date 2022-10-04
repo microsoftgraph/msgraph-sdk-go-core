@@ -17,24 +17,30 @@ import (
 	"strings"
 )
 
-const BATCH_REQUEST_ERROR_REGISTRY_KEY = "BATCH_REQUEST_ERROR_REGISTRY_KEY"
+const BatchRequestErrorRegistryKey = "BATCH_REQUEST_ERROR_REGISTRY_KEY"
 
-type Header map[string]string
+// RequestHeader is a type alias for http request headers
+type RequestHeader map[string]string
 
-func (br Header) Serialize(writer serialization.SerializationWriter) error {
+// Serialize serializes information the current object
+func (br RequestHeader) Serialize(writer serialization.SerializationWriter) error {
 	return nil
 }
 
-func (br Header) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+// GetFieldDeserializers the deserialization information for the current model
+func (br RequestHeader) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
 	return make(map[string]func(serialization.ParseNode) error)
 }
 
+// RequestBody is a type alias for http request bodies
 type RequestBody map[string]interface{}
 
+// Serialize serializes information the current object
 func (br RequestBody) Serialize(writer serialization.SerializationWriter) error {
 	return nil
 }
 
+// GetFieldDeserializers the deserialization information for the current model
 func (br RequestBody) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
 	return make(map[string]func(serialization.ParseNode) error)
 }
@@ -48,6 +54,7 @@ func NewBatchRequest() BatchRequest {
 	return &batchRequest{}
 }
 
+// BatchRequest models all the properties of a batch request
 type BatchRequest interface {
 	serialization.Parsable
 	GetRequests() []BatchItem
@@ -56,14 +63,17 @@ type BatchRequest interface {
 	Send(ctx context.Context, adapter abstractions.RequestAdapter) (BatchResponse, error)
 }
 
+// GetRequests return all the Items in the batch request
 func (br *batchRequest) GetRequests() []BatchItem {
 	return br.requests
 }
 
+// SetRequests add a collection of requests to the batch Items
 func (br *batchRequest) SetRequests(requests []BatchItem) {
 	br.requests = requests
 }
 
+// Serialize serializes information the current object
 func (br *batchRequest) Serialize(writer serialization.SerializationWriter) error {
 	{
 		cast := abs.CollectionApply(br.requests, func(v BatchItem) serialization.Parsable {
@@ -77,11 +87,12 @@ func (br *batchRequest) Serialize(writer serialization.SerializationWriter) erro
 	return nil
 }
 
+// GetFieldDeserializers the deserialization information for the current model
 func (br *batchRequest) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
 	return make(map[string]func(serialization.ParseNode) error)
 }
 
-// AddItem converts RequestInformation to a BatchItem and adds it to a BatchRequest
+// AddBatchRequestStep converts RequestInformation to a BatchItem and adds it to a BatchRequest
 //
 // You can add upto 20 BatchItems to a BatchRequest
 func (br *batchRequest) AddBatchRequestStep(reqInfo abstractions.RequestInformation) (BatchItem, error) {
@@ -123,7 +134,7 @@ func toBatchItem(requestInfo abstractions.RequestInformation) (BatchItem, error)
 	return request, nil
 }
 
-// Send sends a batch request
+// Send serializes and sends the batch request to the server
 func (br *batchRequest) Send(ctx context.Context, adapter abstractions.RequestAdapter) (BatchResponse, error) {
 	baseUrl, err := getBaseUrl(adapter)
 	if err != nil {
@@ -184,7 +195,7 @@ func getRootParseNode(responseItem BatchItem) (absser.ParseNode, error) {
 func throwErrors(responseItem BatchItem, typeName string) error {
 	errorMappings := getErrorMapper(typeName)
 	if errorMappings == nil {
-		errorMappings = getErrorMapper(BATCH_REQUEST_ERROR_REGISTRY_KEY)
+		errorMappings = getErrorMapper(BatchRequestErrorRegistryKey)
 	}
 	responseStatus := *responseItem.GetStatus()
 
@@ -256,7 +267,7 @@ func sendBatchRequest(ctx context.Context, requestInfo *abstractions.RequestInfo
 		return nil, errors.New("requestInfo cannot be nil")
 	}
 
-	response, err := adapter.SendAsync(ctx, requestInfo, CreateBatchResponseDiscriminator, getErrorMapper(BATCH_REQUEST_ERROR_REGISTRY_KEY))
+	response, err := adapter.SendAsync(ctx, requestInfo, CreateBatchResponseDiscriminator, getErrorMapper(BatchRequestErrorRegistryKey))
 	if err != nil {
 		return nil, err
 	}

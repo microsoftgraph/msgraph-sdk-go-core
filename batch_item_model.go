@@ -8,6 +8,7 @@ import (
 	"reflect"
 )
 
+// BatchItem is an instance of the BatchRequest payload to be later serialized to a json payload
 type BatchItem interface {
 	serialization.Parsable
 	GetId() *string
@@ -16,8 +17,8 @@ type BatchItem interface {
 	SetMethod(value *string)
 	GetUrl() *string
 	SetUrl(value *string)
-	GetHeaders() Header
-	SetHeaders(value Header)
+	GetHeaders() RequestHeader
+	SetHeaders(value RequestHeader)
 	GetBody() RequestBody
 	SetBody(value RequestBody)
 	GetDependsOn() []string
@@ -31,7 +32,7 @@ type batchItem struct {
 	Id        *string
 	method    *string
 	Url       *string
-	Headers   Header
+	Headers   RequestHeader
 	Body      RequestBody
 	DependsOn []string
 	Status    *int32
@@ -52,62 +53,77 @@ func NewBatchItem() BatchItem {
 	}
 }
 
+// GetId returns batch item `id` property
 func (bi *batchItem) GetId() *string {
 	return bi.Id
 }
 
+// SetId sets string value as batch item `id` property
 func (bi *batchItem) SetId(value *string) {
 	bi.Id = value
 }
 
+// GetMethod returns batch item `Method` property
 func (bi *batchItem) GetMethod() *string {
 	return bi.method
 }
 
+// SetMethod sets string value as batch item `Method` property
 func (bi *batchItem) SetMethod(value *string) {
 	bi.method = value
 }
 
+// GetUrl returns batch item `Url` property
 func (bi *batchItem) GetUrl() *string {
 	return bi.Url
 }
 
+// SetUrl sets string value as batch item `Url` property
 func (bi *batchItem) SetUrl(value *string) {
 	bi.Url = value
 }
 
-func (bi *batchItem) GetHeaders() Header {
+// GetHeaders returns batch item `Header` as a map[string]string
+func (bi *batchItem) GetHeaders() RequestHeader {
 	return bi.Headers
 }
 
-func (bi *batchItem) SetHeaders(value Header) {
+// SetHeaders sets map[string]string value as batch item `Header` property
+func (bi *batchItem) SetHeaders(value RequestHeader) {
 	bi.Headers = value
 }
 
+// GetBody returns batch item `RequestBody` property
 func (bi *batchItem) GetBody() RequestBody {
 	return bi.Body
 }
 
+// SetBody sets map[string]string value as batch item `RequestBody` property
 func (bi *batchItem) SetBody(value RequestBody) {
 	bi.Body = value
 }
 
+// GetDependsOn returns batch item `dependsOn` property as a string array
 func (bi *batchItem) GetDependsOn() []string {
 	return bi.DependsOn
 }
 
+// SetDependsOn sets []string value as batch item `dependsOn` property
 func (bi *batchItem) SetDependsOn(value []string) {
 	bi.DependsOn = value
 }
 
+// GetStatus returns batch item `status` property
 func (bi *batchItem) GetStatus() *int32 {
 	return bi.Status
 }
 
+// SetStatus sets int32 value as batch item `int` property
 func (bi *batchItem) SetStatus(value *int32) {
 	bi.Status = value
 }
 
+// Serialize serializes information the current object
 func (bi *batchItem) Serialize(writer serialization.SerializationWriter) error {
 	{
 		err := writer.WriteStringValue("id", bi.GetId())
@@ -154,6 +170,7 @@ func (bi *batchItem) Serialize(writer serialization.SerializationWriter) error {
 	return nil
 }
 
+// GetFieldDeserializers the deserialization information for the current model
 func (bi *batchItem) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
 	res := make(map[string]func(serialization.ParseNode) error)
 	res["id"] = abs.SetStringValue(bi.SetId)
@@ -298,6 +315,7 @@ func castMapOfStrings(rawVal interface{}) (map[string]string, error) {
 	return result, nil
 }
 
+// CreateBatchRequestItemDiscriminator creates a new instance of the appropriate class based on discriminator value
 func CreateBatchRequestItemDiscriminator(serialization.ParseNode) (serialization.Parsable, error) {
 	var res batchItem
 	return &res, nil

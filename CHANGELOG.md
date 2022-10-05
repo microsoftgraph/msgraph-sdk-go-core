@@ -11,26 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-## [0.30.0]- 2022-09-29
+## [0.30.0] - 2022-09-29
 
 ### Added
 
 - Adds ability to batch requests.
 - Adds tracing support via Open Telemetry.
 
-## [0.29.0]- 2022-09-27
+## [0.29.0] - 2022-09-27
 
 ### Changed
 
 - Updated dependencies for additional serialization methods.
 
-## [0.28.1]- 2022-09-09
+## [0.28.1] - 2022-09-09
 
 ### Changed
 
 - Updates references to kiota packages.
 
-## [0.28.0]- 2022-08-24
+## [0.28.0] - 2022-08-24
 
 ### Changed
 

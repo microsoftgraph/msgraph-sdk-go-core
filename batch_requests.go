@@ -6,15 +6,16 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
+	"net/url"
+	"reflect"
+	"strconv"
+	"strings"
+
 	"github.com/google/uuid"
 	abs "github.com/microsoft/kiota-abstractions-go"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 	absser "github.com/microsoft/kiota-abstractions-go/serialization"
-	"net/url"
-	"reflect"
-	"strconv"
-	"strings"
 )
 
 const BatchRequestErrorRegistryKey = "BATCH_REQUEST_ERROR_REGISTRY_KEY"
@@ -141,7 +142,7 @@ func (br *batchRequest) Send(ctx context.Context, adapter abstractions.RequestAd
 		return nil, err
 	}
 
-	requestInfo, err := buildRequestInfo(adapter, br, baseUrl)
+	requestInfo, err := buildRequestInfo(ctx, adapter, br, baseUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -152,12 +153,12 @@ func getBaseUrl(adapter abstractions.RequestAdapter) (*url.URL, error) {
 	return url.Parse(adapter.GetBaseUrl())
 }
 
-func buildRequestInfo(adapter abstractions.RequestAdapter, body BatchRequest, baseUrl *url.URL) (*abstractions.RequestInformation, error) {
+func buildRequestInfo(ctx context.Context, adapter abstractions.RequestAdapter, body BatchRequest, baseUrl *url.URL) (*abstractions.RequestInformation, error) {
 	requestInfo := abstractions.NewRequestInformation()
 	requestInfo.Method = abstractions.POST
 	requestInfo.UrlTemplate = "{+baseurl}/$batch"
 	requestInfo.SetUri(*baseUrl)
-	err := requestInfo.SetContentFromParsable(adapter, "application/json", body)
+	err := requestInfo.SetContentFromParsable(ctx, adapter, "application/json", body)
 	if err != nil {
 		return nil, err
 	}

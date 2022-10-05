@@ -3,12 +3,13 @@ package msgraphgocore
 import (
 	"context"
 	"fmt"
-	"github.com/microsoft/kiota-abstractions-go/serialization"
-	"github.com/microsoftgraph/msgraph-sdk-go-core/internal"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/microsoft/kiota-abstractions-go/serialization"
+	"github.com/microsoftgraph/msgraph-sdk-go-core/internal"
 
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/stretchr/testify/assert"
@@ -98,7 +99,7 @@ func TestContentSentToServer(t *testing.T) {
 	baseUrl, err := getBaseUrl(reqAdapter)
 	require.NoError(t, err)
 
-	requestInfo, err := buildRequestInfo(reqAdapter, batch, baseUrl)
+	requestInfo, err := buildRequestInfo(context.Background(), reqAdapter, batch, baseUrl)
 	require.NoError(t, err)
 	content := string(requestInfo.Content)
 	expected := "{\"requests\":[{\"id\":\"123\",\"method\":\"GET\",\"url\":\"\",\"headers\":{\"content-type\":\"application/json\"},\"body\":{\"username\":\"name\"},\"dependsOn\":[]}]}"

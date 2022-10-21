@@ -141,7 +141,7 @@ func (pI *PageIterator) fetchNextPage(context context.Context) (serialization.Pa
 
 	nextLink, err := url.Parse(*pI.currentPage.getOdataNextLink())
 	if err != nil {
-		return nil, err
+		return nil, errors.New("parsing nextLink url failed")
 	}
 
 	requestInfo := abstractions.NewRequestInformation()

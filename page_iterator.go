@@ -17,7 +17,7 @@ type PageIterator struct {
 	reqAdapter      abstractions.RequestAdapter
 	pauseIndex      int
 	constructorFunc serialization.ParsableFactory
-	headers         map[string]string
+	headers         *abstractions.RequestHeaders
 	reqOptions      []abstractions.RequestOption
 }
 
@@ -62,7 +62,7 @@ func NewPageIterator(res interface{}, reqAdapter abstractions.RequestAdapter, co
 		reqAdapter:      reqAdapter,
 		pauseIndex:      0,
 		constructorFunc: constructorFunc,
-		headers:         map[string]string{},
+		headers:         abstractions.NewRequestHeaders(),
 	}, nil
 }
 
@@ -102,7 +102,7 @@ func (pI *PageIterator) Iterate(context context.Context, callback func(pageItem 
 // SetHeaders provides headers for requests made to get subsequent pages
 //
 // Headers in the initial request -- request to get the first page -- are not included in subsequent page requests.
-func (pI *PageIterator) SetHeaders(headers map[string]string) {
+func (pI *PageIterator) SetHeaders(headers *abstractions.RequestHeaders) {
 	pI.headers = headers
 }
 
@@ -147,7 +147,7 @@ func (pI *PageIterator) fetchNextPage(context context.Context) (serialization.Pa
 	requestInfo := abstractions.NewRequestInformation()
 	requestInfo.Method = abstractions.GET
 	requestInfo.SetUri(*nextLink)
-	requestInfo.Headers = pI.headers
+	requestInfo.Headers.AddAll(pI.headers)
 	requestInfo.AddRequestOptions(pI.reqOptions)
 
 	graphResponse, err = pI.reqAdapter.SendAsync(context, requestInfo, pI.constructorFunc, nil)

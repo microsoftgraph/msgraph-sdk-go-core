@@ -82,7 +82,9 @@ func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 	}))
 	defer testServer.Close()
 	pageIterator, _ := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
-	pageIterator.SetHeaders(map[string]string{"ConsistencyLevel": "eventual"})
+	headers := abstractions.NewRequestHeaders()
+	headers.Add("ConsistencyLevel", "eventual")
+	pageIterator.SetHeaders(headers)
 
 	pageIterator.Iterate(context.Background(), func(pageItem interface{}) bool {
 		item := pageItem.(internal.User)

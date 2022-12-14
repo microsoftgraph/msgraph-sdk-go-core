@@ -129,7 +129,12 @@ func toBatchItem(requestInfo abstractions.RequestInformation) (BatchItem, error)
 	request.SetId(&newID)
 	request.SetMethod(&method)
 	request.SetBody(body)
-	request.SetHeaders(requestInfo.Headers)
+	headers := make(map[string]string)
+	for _, key := range requestInfo.Headers.ListKeys() {
+		value := requestInfo.Headers.Get(key)
+		headers[key] = strings.Join(value, ",")
+	}
+	request.SetHeaders(headers)
 	request.SetUrl(&uri.Path)
 
 	return request, nil
@@ -162,9 +167,7 @@ func buildRequestInfo(ctx context.Context, adapter abstractions.RequestAdapter, 
 	if err != nil {
 		return nil, err
 	}
-	requestInfo.Headers = map[string]string{
-		"Content-Type": "application/json",
-	}
+	requestInfo.Headers.Add("Content-Type", "application/json")
 
 	return requestInfo, nil
 }

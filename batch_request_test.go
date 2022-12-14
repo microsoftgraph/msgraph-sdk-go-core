@@ -326,7 +326,9 @@ func getRequestInfo() *abstractions.RequestInformation {
 	reqInfo.SetUri(url.URL{})
 	reqInfo.Content = []byte(content)
 	reqInfo.UrlTemplate = "{+baseurl}/$batch"
-	reqInfo.Headers = map[string]string{"content-type": "application/json"}
+	headers := abstractions.NewRequestHeaders()
+	headers.Add("Content-Type", "application/json")
+	reqInfo.Headers.AddAll(headers)
 
 	return reqInfo
 }

@@ -15,7 +15,7 @@ batchItem := batch.AppendBatchItem(*reqInfo)
 resp, err := batch.Send(reqAdapter)
 
 // print the first response
-fmt.Println(GetBatchResponseById[User](resp, "1")) // returns a serialized response
+fmt.Println(GetBatchResponseById[User](resp, "1", CreateUserFromDiscriminatorValue)) // returns a serialized response
 ```
 
 ## Depends On Relationship

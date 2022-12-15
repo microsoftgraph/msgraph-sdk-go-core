@@ -23,7 +23,7 @@ func p[T interface{}](t T) *T {
 func TestConstructionOfRequests(t *testing.T) {
 	reqInfo := getRequestInfo()
 
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 
 	item1, err := batch.AddBatchRequestStep(*reqInfo)
 	require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestRegisteringDependsOn(t *testing.T) {
 	reqInfo1 := getRequestInfo()
 	reqInfo2 := getRequestInfo()
 
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 	batchItem1, err := batch.AddBatchRequestStep(*reqInfo1)
 	require.NoError(t, err)
 
@@ -67,7 +67,7 @@ func TestReturnsBatchResponse(t *testing.T) {
 	mockPath := testServer.URL + "/$batch"
 	reqAdapter.SetBaseUrl(mockPath) // check that path is not empty instead
 
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 	_, err := batch.AddBatchRequestStep(*reqInfo)
 	require.NoError(t, err)
 
@@ -91,7 +91,7 @@ func TestContentSentToServer(t *testing.T) {
 	mockPath := testServer.URL + "/$batch"
 	reqAdapter.SetBaseUrl(mockPath) // check that path is not empty instead
 
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 	item, err := batch.AddBatchRequestStep(*reqInfo)
 	item.SetId(p("123"))
 	require.NoError(t, err)
@@ -112,7 +112,7 @@ func TestContentSentToServer(t *testing.T) {
 }
 
 func TestRespectsBatchItemLimitOf20BatchItems(t *testing.T) {
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 	reqInfo := getRequestInfo()
 
 	for i := 0; i < 20; i++ {
@@ -138,7 +138,7 @@ func TestHandlesUnhandledHTTPError(t *testing.T) {
 	reqAdapter.SetBaseUrl(mockPath)
 
 	reqInfo := getRequestInfo()
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 	_, err := batch.AddBatchRequestStep(*reqInfo)
 	require.NoError(t, err)
 
@@ -158,7 +158,7 @@ func TestHandlesHTTPError(t *testing.T) {
 	reqAdapter.SetBaseUrl(mockPath)
 
 	reqInfo := getRequestInfo()
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 	batch.AddBatchRequestStep(*reqInfo)
 
 	errorMapping := abstractions.ErrorMappings{
@@ -213,7 +213,7 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 	reqAdapter.SetBaseUrl(mockPath)
 
 	reqInfo := getRequestInfo()
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 	_, err := batch.AddBatchRequestStep(*reqInfo)
 	if err != nil {
 		return
@@ -222,23 +222,52 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 	resp, err := batch.Send(context.Background(), reqAdapter)
 	require.NoError(t, err)
 
-	user, err := GetBatchResponseById[User](resp, "2")
+	user, err := GetBatchResponseById[Userable](resp, "2", CreateUser)
 	require.NoError(t, err)
 
-	assert.Equal(t, user.UserName, "testuser")
+	assert.Equal(t, *(user.GetUserName()), "testuser")
+}
+
+type Userable interface {
+	serialization.Parsable
+	GetUserName() *string
+	SetUserName(*string)
 }
 
 type User struct {
-	UserName string `json:"username"`
-	Person   Person `json:"person"`
+	UserName *string
+	Person   *Person
 }
 
-func (u User) Serialize(writer serialization.SerializationWriter) error {
+func (u *User) GetUserName() *string {
+	return u.UserName
+}
+
+func (u *User) SetUserName(userName *string) {
+	u.UserName = userName
+}
+
+func (u *User) Serialize(writer serialization.SerializationWriter) error {
 	panic("implement me")
 }
 
-func (u User) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
-	panic("implement me")
+func (u *User) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	res := make(map[string]func(serialization.ParseNode) error)
+	res["username"] = func(n serialization.ParseNode) error {
+		val, err := n.GetStringValue()
+		if err != nil {
+			return err
+		}
+		if val != nil {
+			u.SetUserName(val)
+		}
+		return nil
+	}
+	return res
+}
+
+func CreateUser(parseNode serialization.ParseNode) (serialization.Parsable, error) {
+	return &User{}, nil
 }
 
 type Person struct {
@@ -252,11 +281,11 @@ type Person struct {
 }
 
 func (u Person) Serialize(writer serialization.SerializationWriter) error {
-	panic("implement me")
+	return nil
 }
 
 func (u Person) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
-	panic("implement me")
+	return make(map[string]func(serialization.ParseNode) error)
 }
 
 func TestGetResponseByIdFailedRequest(t *testing.T) {
@@ -267,14 +296,14 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 	reqAdapter.SetBaseUrl(mockPath)
 
 	reqInfo := getRequestInfo()
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 	_, err := batch.AddBatchRequestStep(*reqInfo)
 	require.NoError(t, err)
 
 	resp, err := batch.Send(context.Background(), reqAdapter)
 	require.NoError(t, err)
 
-	_, err = GetBatchResponseById[User](resp, "3")
+	_, err = GetBatchResponseById[Userable](resp, "3", CreateUser)
 	assert.Equal(t, "The server returned an unexpected status code and no error factory is registered for this code: 401", err.Error())
 }
 
@@ -294,14 +323,14 @@ func TestGetResponseByIdFailedRequestWithFactory(t *testing.T) {
 	require.NoError(t, err)
 
 	reqInfo := getRequestInfo()
-	batch := NewBatchRequest()
+	batch := NewBatchRequest(reqAdapter)
 	_, err = batch.AddBatchRequestStep(*reqInfo)
 	require.NoError(t, err)
 
 	resp, err := batch.Send(context.Background(), reqAdapter)
 	require.NoError(t, err)
 
-	_, err = GetBatchResponseById[User](resp, "3")
+	_, err = GetBatchResponseById[Userable](resp, "3", CreateUser)
 	assert.Equal(t, "The server returned an unexpected status code with no response body: 401", err.Error())
 
 	err = DeRegisterError(BatchRequestErrorRegistryKey)

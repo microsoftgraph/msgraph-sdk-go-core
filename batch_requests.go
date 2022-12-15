@@ -116,6 +116,7 @@ func (br *batchRequest) AddBatchRequestStep(reqInfo abstractions.RequestInformat
 func (br *batchRequest) toBatchItem(requestInfo abstractions.RequestInformation) (BatchItem, error) {
 	if _, ok := requestInfo.PathParameters["baseurl"]; !ok {
 		// address issue for request information missing baseUrl
+		// https://github.com/microsoft/kiota/issues/2061
 		requestInfo.PathParameters["baseurl"] = br.adapter.GetBaseUrl()
 	}
 

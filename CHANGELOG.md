@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.31.1] - 2022-12-15
+
+### Changed
+
+- Fixes path parameters missing when sending batch requests.
+- Fixes appending items when sending batch requests.
+- Fixes `Send` url when sending batch requests
+
 ## [0.31.0] - 2022-12-13
 
 ### Changed

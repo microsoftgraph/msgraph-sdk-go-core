@@ -4,14 +4,14 @@ go 1.18
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/microsoft/kiota-abstractions-go v0.15.1
+	github.com/microsoft/kiota-abstractions-go v0.15.2
 	github.com/microsoft/kiota-http-go v0.11.0
 	github.com/microsoft/kiota-serialization-json-go v0.7.2
 	github.com/stretchr/testify v1.8.1
 )
 
 require (
-	github.com/cjlapao/common-go v0.0.36 // indirect
+	github.com/cjlapao/common-go v0.0.37 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

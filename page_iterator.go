@@ -150,7 +150,7 @@ func (pI *PageIterator) fetchNextPage(context context.Context) (serialization.Pa
 	requestInfo.Headers.AddAll(pI.headers)
 	requestInfo.AddRequestOptions(pI.reqOptions)
 
-	graphResponse, err = pI.reqAdapter.SendAsync(context, requestInfo, pI.constructorFunc, nil)
+	graphResponse, err = pI.reqAdapter.Send(context, requestInfo, pI.constructorFunc, nil)
 	if err != nil {
 		return nil, err
 	}

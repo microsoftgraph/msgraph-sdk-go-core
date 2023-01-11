@@ -6,15 +6,16 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
+	"net/url"
+	"reflect"
+	"strconv"
+	"strings"
+
 	"github.com/google/uuid"
 	abs "github.com/microsoft/kiota-abstractions-go"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 	absser "github.com/microsoft/kiota-abstractions-go/serialization"
-	"net/url"
-	"reflect"
-	"strconv"
-	"strings"
 )
 
 const BatchRequestErrorRegistryKey = "BATCH_REQUEST_ERROR_REGISTRY_KEY"
@@ -291,7 +292,7 @@ func sendBatchRequest(ctx context.Context, requestInfo *abstractions.RequestInfo
 		return nil, errors.New("requestInfo cannot be nil")
 	}
 
-	response, err := adapter.SendAsync(ctx, requestInfo, CreateBatchResponseDiscriminator, getErrorMapper(BatchRequestErrorRegistryKey))
+	response, err := adapter.Send(ctx, requestInfo, CreateBatchResponseDiscriminator, getErrorMapper(BatchRequestErrorRegistryKey))
 	if err != nil {
 		return nil, err
 	}

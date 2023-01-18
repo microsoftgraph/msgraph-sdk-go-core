@@ -17,7 +17,6 @@ Get started with the Microsoft Graph Core SDK for Go by integrating the [Microso
 ```Shell
 go get github.com/microsoftgraph/msgraph-sdk-go-core
 go get github.com/Azure/azure-sdk-for-go/sdk/azidentity
-go get github.com/microsoft/kiota-authentication-azure-go
 ```
 
 ## 2. Getting started
@@ -37,7 +36,7 @@ For an example of how to get an authentication provider, see [choose a Microsoft
 ```Golang
 import (
     azidentity "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-    a          "github.com/microsoft/kiota-authentication-azure-go"
+    a          "github.com/microsoftgraph/msgraph-sdk-go-core/authentication"
     "context"
 )
 

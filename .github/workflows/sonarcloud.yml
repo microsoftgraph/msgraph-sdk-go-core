@@ -24,7 +24,7 @@ jobs:
         run: go build
         working-directory: ${{ env.relativePath }}
       - name: Run unit tests
-        run: go test -o result.out -coverprofile cover.out
+        run: go test -coverprofile cover.out -coverpkg=./... ./...
         working-directory: ${{ env.relativePath }}
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master

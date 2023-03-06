@@ -3,12 +3,10 @@ package msgraphgocore
 import (
 	"context"
 	"errors"
-	"net/url"
-	"reflect"
-	"unsafe"
-
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
+	"net/url"
+	"reflect"
 )
 
 // PageIterator represents an iterator object that can be used to get subsequent pages of a collection.
@@ -199,13 +197,12 @@ func convertToPage(response interface{}) (PageResult, error) {
 	if response == nil {
 		return page, errors.New("response cannot be nil")
 	}
-	ref := reflect.ValueOf(response).Elem()
 
-	value := ref.FieldByName("value")
-	if value.IsNil() {
+	method := reflect.ValueOf(response).MethodByName("GetValue")
+	if method.IsNil() {
 		return page, errors.New("value property missing in response object")
 	}
-	value = reflect.NewAt(value.Type(), unsafe.Pointer(value.UnsafeAddr())).Elem()
+	value := method.Call(nil)[0]
 
 	// Collect all entities in the value slice.
 	// This converts a graph slice ie []graph.User to a dynamic slice []interface{}

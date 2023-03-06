@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.34.1] - 2023-03-06
+
+### Changed
+
+- Change `PageIterator` to use `GetValue` method instead of `value` field to access response.
+
 ## [0.34.0] - 2023-02-23
 
 ### Added

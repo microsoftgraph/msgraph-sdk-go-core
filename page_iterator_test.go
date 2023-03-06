@@ -42,7 +42,7 @@ func TestConstructorWithInvalidRequestAdapter(t *testing.T) {
 }
 
 func TestConstructorWithInvalidGraphResponse(t *testing.T) {
-	graphResponse := internal.NewUsersResponse()
+	graphResponse := internal.NewInvalidUsersResponse()
 
 	_, err := NewPageIterator(graphResponse, reqAdapter, ParsableCons)
 

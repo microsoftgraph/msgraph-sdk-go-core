@@ -10,6 +10,13 @@ type batchResponse struct {
 	isIndexed     bool
 }
 
+func NewBatchResponse() BatchResponse {
+	return &batchResponse{
+		indexResponse: make(map[string]BatchItem),
+		isIndexed:     false,
+	}
+}
+
 // GetResponses returns a slice of BatchItem to the user
 func (br *batchResponse) GetResponses() []BatchItem {
 	return br.responses
@@ -18,6 +25,13 @@ func (br *batchResponse) GetResponses() []BatchItem {
 // SetResponses adds a slice of BatchItem to the response
 func (br *batchResponse) SetResponses(responses []BatchItem) {
 	br.responses = responses
+}
+
+// AddResponses adds elements to existing response
+func (br *batchResponse) AddResponses(responses []BatchItem) {
+	for _, v := range responses {
+		br.responses = append(br.responses, v)
+	}
 }
 
 // GetResponseById returns a response payload as a batch item
@@ -36,11 +50,7 @@ func (br *batchResponse) GetResponseById(itemId string) BatchItem {
 
 // CreateBatchResponseDiscriminator creates a new instance of the appropriate class based on discriminator value
 func CreateBatchResponseDiscriminator(serialization.ParseNode) (serialization.Parsable, error) {
-	res := batchResponse{
-		indexResponse: make(map[string]BatchItem),
-		isIndexed:     false,
-	}
-	return &res, nil
+	return NewBatchResponse(), nil
 }
 
 // BatchResponse instance of batch request result payload
@@ -48,6 +58,7 @@ type BatchResponse interface {
 	serialization.Parsable
 	GetResponses() []BatchItem
 	SetResponses(responses []BatchItem)
+	AddResponses(responses []BatchItem)
 	GetResponseById(itemId string) BatchItem
 }
 

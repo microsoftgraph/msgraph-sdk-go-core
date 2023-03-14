@@ -28,3 +28,16 @@ batchItem2 := batch.AppendBatchItem(*reqInfo)
 
 batchItem1.DependsOnItem(batchItem2)
 ```
+
+## Adds BathcCollectionResponse
+
+`BatchRequestCollection` allows users to add more than 19 requests and send them as multiple `BatchRequest`'s. The send functionality of BatchRequestCollection splits the requests and sends them in serial.
+
+```go
+batchCollection := msgraphgocore.NewBatchRequestCollection(client.GetAdapter())
+
+meRequestItem, _ := batchCollection.AddBatchRequestStep(*meRequest)
+eventsRequestItem, _ := batchCollection.AddBatchRequestStep(*eventsRequest)
+
+batchResponse, _ := batchCollection.Send(context.Background(), client.GetAdapter())
+```

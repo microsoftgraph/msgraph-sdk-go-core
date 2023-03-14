@@ -398,5 +398,5 @@ func getDummyJSON() string {
 	  "body": null
 	}
 	]
-				}`
+  }`
 }

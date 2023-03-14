@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.35.0] - 2023-03-14
+
+### Added
+
+- Adds `BatchRequestCollection` support.
+
 ## [0.34.1] - 2023-03-06
 
 ### Changed

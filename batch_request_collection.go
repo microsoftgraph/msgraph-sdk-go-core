@@ -6,13 +6,13 @@ import (
 )
 
 type BatchRequestCollection struct {
-	*batchRequest
+	batchRequest *batchRequest
 }
 
 // NewBatchRequestCollection creates an instance of a BatchRequestCollection
 func NewBatchRequestCollection(adapter abstractions.RequestAdapter) *BatchRequestCollection {
 	return &BatchRequestCollection{
-		&batchRequest{
+		batchRequest: &batchRequest{
 			adapter: adapter,
 		},
 	}
@@ -20,18 +20,18 @@ func NewBatchRequestCollection(adapter abstractions.RequestAdapter) *BatchReques
 
 // AddBatchRequestStep converts RequestInformation to a BatchItem and adds it to a BatchRequestCollection
 func (b *BatchRequestCollection) AddBatchRequestStep(reqInfo abstractions.RequestInformation) (BatchItem, error) {
-	return b.AddLimitedBatchRequestStep(reqInfo, -1)
+	return b.batchRequest.AddLimitedBatchRequestStep(reqInfo, -1)
 }
 
 // Send serializes and sends the batch request to the server
 func (b *BatchRequestCollection) Send(ctx context.Context, adapter abstractions.RequestAdapter) (BatchResponse, error) {
 	// spit request with a max of 19
-	requestItems := chunkSlice(b.requests, 19)
+	requestItems := chunkSlice(b.batchRequest.requests, 19)
 
 	// execute requests
 	response := NewBatchResponse()
 	for _, requests := range requestItems {
-		batch := NewBatchRequest(b.adapter)
+		batch := NewBatchRequest(b.batchRequest.adapter)
 		batch.SetRequests(requests)
 		res, err := batch.Send(ctx, adapter)
 		if err != nil {

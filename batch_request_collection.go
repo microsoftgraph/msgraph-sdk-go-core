@@ -20,7 +20,7 @@ func NewBatchRequestCollection(adapter abstractions.RequestAdapter) *BatchReques
 
 // AddBatchRequestStep converts RequestInformation to a BatchItem and adds it to a BatchRequestCollection
 func (b *BatchRequestCollection) AddBatchRequestStep(reqInfo abstractions.RequestInformation) (BatchItem, error) {
-	return b.batchRequest.AddLimitedBatchRequestStep(reqInfo, -1)
+	return b.batchRequest.addLimitedBatchRequestStep(reqInfo, -1)
 }
 
 // Send serializes and sends the batch request to the server

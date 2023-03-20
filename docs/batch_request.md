@@ -15,7 +15,8 @@ batchItem := batch.AppendBatchItem(*reqInfo)
 resp, err := batch.Send(reqAdapter)
 
 // print the first response
-fmt.Println(GetBatchResponseById[User](resp, "1", CreateUserFromDiscriminatorValue)) // returns a serialized response
+user := GetBatchResponseById[User](resp, "1", CreateUserFromDiscriminatorValue) // returns a serialized response
+fmt.Println(user.GetDisplayName()) // Print display name
 ```
 
 ## Depends On Relationship
@@ -42,5 +43,6 @@ eventsRequestItem, _ := batchCollection.AddBatchRequestStep(*eventsRequest)
 batchResponse, _ := batchCollection.Send(context.Background(), client.GetAdapter())
 
 // print the first response
-fmt.Println(GetBatchResponseById[User](batchResponse, "1", CreateUserFromDiscriminatorValue)) // returns a serialized response
+user := GetBatchResponseById[User](resp, "1", CreateUserFromDiscriminatorValue) // returns a serialized response
+fmt.Println(user.GetDisplayName()) // Print display name
 ```

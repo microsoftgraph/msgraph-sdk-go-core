@@ -2,19 +2,29 @@ package msgraphgocore
 
 import (
 	"context"
+	"errors"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 )
 
 type BatchRequestCollection struct {
 	batchRequest *batchRequest
+	batchLimit   int
 }
 
-// NewBatchRequestCollection creates an instance of a BatchRequestCollection
+const MaxBatchRequests = 4
+
+// NewBatchRequestCollection creates an instance of a BatchRequestCollection with a default request limit
 func NewBatchRequestCollection(adapter abstractions.RequestAdapter) *BatchRequestCollection {
+	return NewBatchRequestCollectionWithLimit(adapter, MaxBatchRequests)
+}
+
+// NewBatchRequestCollectionWithLimit creates an instance of a BatchRequestCollection with a defined limit in requests
+func NewBatchRequestCollectionWithLimit(adapter abstractions.RequestAdapter, batchLimit int) *BatchRequestCollection {
 	return &BatchRequestCollection{
 		batchRequest: &batchRequest{
 			adapter: adapter,
 		},
+		batchLimit: batchLimit,
 	}
 }
 
@@ -27,6 +37,10 @@ func (b *BatchRequestCollection) AddBatchRequestStep(reqInfo abstractions.Reques
 func (b *BatchRequestCollection) Send(ctx context.Context, adapter abstractions.RequestAdapter) (BatchResponse, error) {
 	// spit request with a max of 19
 	requestItems := chunkSlice(b.batchRequest.requests, 19)
+
+	if len(requestItems) > b.batchLimit {
+		return nil, errors.New("exceeded max number of batch requests")
+	}
 
 	// execute requests
 	response := NewBatchResponse()

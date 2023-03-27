@@ -43,6 +43,6 @@ eventsRequestItem, _ := batchCollection.AddBatchRequestStep(*eventsRequest)
 batchResponse, _ := batchCollection.Send(context.Background(), client.GetAdapter())
 
 // print the first response
-user := GetBatchResponseById[User](resp, "1", CreateUserFromDiscriminatorValue) // returns a serialized response
+user := GetBatchResponseById[User](batchResponse, "1", CreateUserFromDiscriminatorValue) // returns a serialized response
 fmt.Println(user.GetDisplayName()) // Print display name
 ```

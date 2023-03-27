@@ -87,13 +87,22 @@ func (br *batchResponse) GetFieldDeserializers() map[string]func(serialization.P
 	return res
 }
 
+// GetFailedResponses returns a map of responses that failed
+func (br *batchResponse) GetFailedResponses() map[string]int32 {
+	statuses := make(map[string]int32)
+	for _, response := range br.GetResponses() {
+		if *response.GetStatus() > 399 && *response.GetStatus() < 600 {
+			statuses[*response.GetId()] = *response.GetStatus()
+		}
+	}
+	return statuses
+}
+
 // GetStatusCodes returns a map of responses statuses and the status codes
 func (br *batchResponse) GetStatusCodes() map[string]int32 {
 	statuses := make(map[string]int32)
 	for _, response := range br.GetResponses() {
-		if *response.GetStatus() < 399 && *response.GetStatus() > 600 {
-			statuses[*response.GetId()] = *response.GetStatus()
-		}
+		statuses[*response.GetId()] = *response.GetStatus()
 	}
 	return statuses
 }

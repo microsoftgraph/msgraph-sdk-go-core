@@ -60,6 +60,8 @@ type BatchResponse interface {
 	SetResponses(responses []BatchItem)
 	AddResponses(responses []BatchItem)
 	GetResponseById(itemId string) BatchItem
+	GetFailedResponses() map[string]int32
+	GetStatusCodes() map[string]int32
 }
 
 // Serialize serializes information the current object

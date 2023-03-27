@@ -10,8 +10,8 @@ import (
 )
 
 // PageIterator represents an iterator object that can be used to get subsequent pages of a collection.
-type PageIterator struct {
-	currentPage     PageResult
+type PageIterator[T interface{}] struct {
+	currentPage     PageResult[T]
 	reqAdapter      abstractions.RequestAdapter
 	pauseIndex      int
 	constructorFunc serialization.ParsableFactory
@@ -20,12 +20,12 @@ type PageIterator struct {
 }
 
 // PageResult represents a page object built from a graph response object
-type PageResult struct {
+type PageResult[T interface{}] struct {
 	oDataNextLink *string
-	value         []interface{}
+	value         []T
 }
 
-func (p *PageResult) getValue() []interface{} {
+func (p *PageResult[T]) getValue() []T {
 	if p == nil {
 		return nil
 	}
@@ -33,7 +33,7 @@ func (p *PageResult) getValue() []interface{} {
 	return p.value
 }
 
-func (p *PageResult) getOdataNextLink() *string {
+func (p *PageResult[T]) getOdataNextLink() *string {
 	if p == nil {
 		return nil
 	}
@@ -45,17 +45,17 @@ func (p *PageResult) getOdataNextLink() *string {
 //
 // It has three parameters. res is the graph response from the initial request and represents the first page.
 // reqAdapter is used for getting the next page and constructorFunc is used for serializing next page's response to the specified type.
-func NewPageIterator(res interface{}, reqAdapter abstractions.RequestAdapter, constructorFunc serialization.ParsableFactory) (*PageIterator, error) {
+func NewPageIterator[T interface{}](res interface{}, reqAdapter abstractions.RequestAdapter, constructorFunc serialization.ParsableFactory) (*PageIterator[T], error) {
 	if reqAdapter == nil {
 		return nil, errors.New("reqAdapter can't be nil")
 	}
 
-	page, err := convertToPage(res)
+	page, err := convertToPage[T](res)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PageIterator{
+	return &PageIterator[T]{
 		currentPage:     page,
 		reqAdapter:      reqAdapter,
 		pauseIndex:      0,
@@ -78,7 +78,7 @@ func NewPageIterator(res interface{}, reqAdapter abstractions.RequestAdapter, co
 //	    return true
 //	}
 //	err := pageIterator.Iterate(context.Background(), callbackFunc)
-func (pI *PageIterator) Iterate(context context.Context, callback func(pageItem interface{}) bool) error {
+func (pI *PageIterator[T]) Iterate(context context.Context, callback func(pageItem T) bool) error {
 	for {
 		keepIterating := pI.enumerate(callback)
 
@@ -100,17 +100,17 @@ func (pI *PageIterator) Iterate(context context.Context, callback func(pageItem 
 // SetHeaders provides headers for requests made to get subsequent pages
 //
 // Headers in the initial request -- request to get the first page -- are not included in subsequent page requests.
-func (pI *PageIterator) SetHeaders(headers *abstractions.RequestHeaders) {
+func (pI *PageIterator[T]) SetHeaders(headers *abstractions.RequestHeaders) {
 	pI.headers = headers
 }
 
 // SetReqOptions provides configuration for handlers during requests for subsequent pages
-func (pI *PageIterator) SetReqOptions(reqOptions []abstractions.RequestOption) {
+func (pI *PageIterator[T]) SetReqOptions(reqOptions []abstractions.RequestOption) {
 	pI.reqOptions = reqOptions
 }
 
-func (pI *PageIterator) next(context context.Context) (PageResult, error) {
-	var page PageResult
+func (pI *PageIterator[T]) next(context context.Context) (PageResult[T], error) {
+	var page PageResult[T]
 
 	if pI.currentPage.getOdataNextLink() == nil || *pI.currentPage.getOdataNextLink() == "" {
 		return page, nil
@@ -121,7 +121,7 @@ func (pI *PageIterator) next(context context.Context) (PageResult, error) {
 		return page, err
 	}
 
-	page, err = convertToPage(resp)
+	page, err = convertToPage[T](resp)
 	if err != nil {
 		return page, err
 	}
@@ -129,7 +129,7 @@ func (pI *PageIterator) next(context context.Context) (PageResult, error) {
 	return page, nil
 }
 
-func (pI *PageIterator) fetchNextPage(context context.Context) (serialization.Parsable, error) {
+func (pI *PageIterator[T]) fetchNextPage(context context.Context) (serialization.Parsable, error) {
 	var graphResponse serialization.Parsable
 	var err error
 
@@ -156,7 +156,7 @@ func (pI *PageIterator) fetchNextPage(context context.Context) (serialization.Pa
 	return graphResponse, nil
 }
 
-func (pI *PageIterator) enumerate(callback func(item interface{}) bool) bool {
+func (pI *PageIterator[T]) enumerate(callback func(item T) bool) bool {
 	keepIterating := true
 
 	pageItems := pI.currentPage.getValue()
@@ -191,8 +191,8 @@ type PageWithOdataNextLink interface {
 	GetOdataNextLink() *string
 }
 
-func convertToPage(response interface{}) (PageResult, error) {
-	var page PageResult
+func convertToPage[T interface{}](response interface{}) (PageResult[T], error) {
+	var page PageResult[T]
 
 	if response == nil {
 		return page, errors.New("response cannot be nil")
@@ -206,9 +206,9 @@ func convertToPage(response interface{}) (PageResult, error) {
 
 	// Collect all entities in the value slice.
 	// This converts a graph slice ie []graph.User to a dynamic slice []interface{}
-	collected := make([]interface{}, 0)
+	collected := make([]T, 0)
 	for i := 0; i < value.Len(); i++ {
-		collected = append(collected, value.Index(i).Interface())
+		collected = append(collected, value.Index(i).Interface().(T))
 	}
 
 	parsablePage, ok := response.(PageWithOdataNextLink)

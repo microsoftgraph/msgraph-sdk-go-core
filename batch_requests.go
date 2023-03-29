@@ -101,7 +101,11 @@ func (br *batchRequest) GetFieldDeserializers() map[string]func(serialization.Pa
 //
 // You can add upto 20 BatchItems to a BatchRequest
 func (br *batchRequest) AddBatchRequestStep(reqInfo abstractions.RequestInformation) (BatchItem, error) {
-	if len(br.GetRequests()) > 19 {
+	return br.addLimitedBatchRequestStep(reqInfo, 19)
+}
+
+func (br *batchRequest) addLimitedBatchRequestStep(reqInfo abstractions.RequestInformation, requestLimit int) (BatchItem, error) {
+	if requestLimit != -1 && len(br.GetRequests()) > requestLimit {
 		return nil, errors.New("batch items limit exceeded. BatchRequest has a limit of 20 batch items")
 	}
 

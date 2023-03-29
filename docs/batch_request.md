@@ -15,7 +15,8 @@ batchItem := batch.AppendBatchItem(*reqInfo)
 resp, err := batch.Send(reqAdapter)
 
 // print the first response
-fmt.Println(GetBatchResponseById[User](resp, "1", CreateUserFromDiscriminatorValue)) // returns a serialized response
+user := GetBatchResponseById[User](resp, "1", CreateUserFromDiscriminatorValue) // returns a serialized response
+fmt.Println(user.GetDisplayName()) // Print display name
 ```
 
 ## Depends On Relationship
@@ -27,4 +28,21 @@ batchItem1 := batch.AppendBatchItem(*reqInfo)
 batchItem2 := batch.AppendBatchItem(*reqInfo)
 
 batchItem1.DependsOnItem(batchItem2)
+```
+
+## Adds BatchCollectionResponse
+
+`BatchRequestCollection` allows users to add more than 19 requests and send them as multiple `BatchRequest`'s. The send functionality of BatchRequestCollection splits the requests and sends them in serial.
+
+```go
+batchCollection := msgraphgocore.NewBatchRequestCollection(client.GetAdapter())
+
+meRequestItem, _ := batchCollection.AddBatchRequestStep(*meRequest)
+eventsRequestItem, _ := batchCollection.AddBatchRequestStep(*eventsRequest)
+
+batchResponse, _ := batchCollection.Send(context.Background(), client.GetAdapter())
+
+// print the first response
+user := GetBatchResponseById[User](batchResponse, "1", CreateUserFromDiscriminatorValue) // returns a serialized response
+fmt.Println(user.GetDisplayName()) // Print display name
 ```

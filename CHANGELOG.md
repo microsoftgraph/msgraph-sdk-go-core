@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.36.1] - 2023-04-13
+
+### Added
+
+- Sets default `UrlReplacementPairs` on the Request adapter. Fixes batch requests urls for replaced Urls.
+
 ## [0.36.0] - 2023-03-27
 
 ### Added

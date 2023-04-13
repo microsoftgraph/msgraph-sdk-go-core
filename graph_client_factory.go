@@ -1,9 +1,8 @@
 package msgraphgocore
 
 import (
-	nethttp "net/http"
-
 	khttp "github.com/microsoft/kiota-http-go"
+	nethttp "net/http"
 )
 
 // GetDefaultMiddlewaresWithOptions creates a default slice of middleware for the Graph Client.
@@ -11,7 +10,6 @@ func GetDefaultMiddlewaresWithOptions(options *GraphClientOptions) []khttp.Middl
 	kiotaMiddlewares := khttp.GetDefaultMiddlewares()
 	graphMiddlewares := []khttp.Middleware{
 		NewGraphTelemetryHandler(options),
-		khttp.NewUrlReplaceHandler(),
 	}
 	graphMiddlewaresLen := len(graphMiddlewares)
 	resultMiddlewares := make([]khttp.Middleware, len(kiotaMiddlewares)+graphMiddlewaresLen)

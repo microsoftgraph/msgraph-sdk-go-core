@@ -125,7 +125,7 @@ func (br *batchRequest) toBatchItem(requestInfo abstractions.RequestInformation)
 		requestInfo.PathParameters["baseurl"] = br.adapter.GetBaseUrl()
 	}
 
-	uri, err := requestInfo.GetUri()
+	uri, err := requestInfo.GetReplacedUri(br.adapter.GetUrlReplacementPairs())
 	if err != nil {
 		return nil, err
 	}

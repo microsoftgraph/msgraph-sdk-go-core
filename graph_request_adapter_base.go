@@ -44,6 +44,7 @@ func NewGraphRequestAdapterBaseWithParseNodeFactoryAndSerializationWriterFactory
 		parseNodeFactory = absser.DefaultParseNodeFactoryInstance
 	}
 	baseAdapter, err := khttp.NewNetHttpRequestAdapterWithParseNodeFactoryAndSerializationWriterFactoryAndHttpClient(authenticationProvider, parseNodeFactory, serializationWriterFactory, httpClient)
+	baseAdapter.SetUrlReplacementPairs(map[string]string{"/users/me-token-to-replace": "/me"})
 	if err != nil {
 		return nil, err
 	}

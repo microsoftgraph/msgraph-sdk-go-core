@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.36.1] - 2023-04-17
+
+### Added
+
+- Adds url token replacement to batch requests.
+
 ## [0.36.0] - 2023-03-27
 
 ### Added

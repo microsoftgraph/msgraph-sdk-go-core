@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
+	nethttplibrary "github.com/microsoft/kiota-http-go"
 	"net/url"
 	"reflect"
 	"strconv"
@@ -129,6 +130,7 @@ func (br *batchRequest) toBatchItem(requestInfo abstractions.RequestInformation)
 	if err != nil {
 		return nil, err
 	}
+	uriString := nethttplibrary.ReplacePathTokens(uri.String(), ReplacementPairs)
 
 	var body map[string]interface{}
 	if requestInfo.Content != nil {
@@ -156,7 +158,7 @@ func (br *batchRequest) toBatchItem(requestInfo abstractions.RequestInformation)
 	if err != nil {
 		return nil, err
 	}
-	var finalUrl = strings.Replace(uri.String(), baseUri.String(), "", 1)
+	var finalUrl = strings.Replace(uriString, baseUri.String(), "", 1)
 	request.SetUrl(&finalUrl)
 
 	return request, nil

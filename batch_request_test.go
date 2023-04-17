@@ -159,14 +159,15 @@ func TestHandlesHTTPError(t *testing.T) {
 
 	reqInfo := getRequestInfo()
 	batch := NewBatchRequest(reqAdapter)
-	batch.AddBatchRequestStep(*reqInfo)
+	_, err := batch.AddBatchRequestStep(*reqInfo)
+	require.NoError(t, err)
 
 	errorMapping := abstractions.ErrorMappings{
 		"4XX": internal.CreateSampleErrorFromDiscriminatorValue,
 		"5XX": internal.CreateSampleErrorFromDiscriminatorValue,
 	}
 	// register errorMapper
-	err := RegisterError(BatchRequestErrorRegistryKey, errorMapping)
+	err = RegisterError(BatchRequestErrorRegistryKey, errorMapping)
 	require.NoError(t, err)
 
 	_, err = batch.Send(context.Background(), reqAdapter)

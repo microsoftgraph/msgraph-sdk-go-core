@@ -6,9 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
-	"fmt"
 	nethttplibrary "github.com/microsoft/kiota-http-go"
-	nethttp "net/http"
 	"net/url"
 	"reflect"
 	"strconv"
@@ -53,21 +51,12 @@ func (br RequestBody) GetFieldDeserializers() map[string]func(serialization.Pars
 type batchRequest struct {
 	requests []BatchItem
 	adapter  abstractions.RequestAdapter
-	client   *nethttp.Client
 }
 
 // NewBatchRequest creates an instance of BatchRequest
 func NewBatchRequest(adapter abstractions.RequestAdapter) BatchRequest {
-	var c *nethttp.Client
-
-	method := reflect.ValueOf(adapter).MethodByName("GetClient")
-	if !method.IsNil() {
-		c = method.Call(nil)[0].Interface().(*nethttp.Client)
-	}
-
 	return &batchRequest{
 		adapter: adapter,
-		client:  c,
 	}
 }
 
@@ -141,11 +130,7 @@ func (br *batchRequest) toBatchItem(requestInfo abstractions.RequestInformation)
 	if err != nil {
 		return nil, err
 	}
-	uriString := uri.String()
-	replaceHandler := br.getUrlReplacer()
-	if replaceHandler != nil {
-		uriString = replaceHandler.ReplacePathTokens(uriString)
-	}
+	uriString := nethttplibrary.ReplacePathTokens(uri.String(), ReplacementPairs)
 
 	var body map[string]interface{}
 	if requestInfo.Content != nil {
@@ -195,23 +180,6 @@ func (br *batchRequest) Send(ctx context.Context, adapter abstractions.RequestAd
 
 func getBaseUrl(adapter abstractions.RequestAdapter) (*url.URL, error) {
 	return url.Parse(adapter.GetBaseUrl())
-}
-
-func (br *batchRequest) getUrlReplacer() *nethttplibrary.UrlReplaceHandler {
-	transport := br.client.Transport
-	x, ok := transport.(*nethttplibrary.CustomTransport)
-	if ok {
-		for _, middleware := range x.GetMiddleWares() {
-			switch v := middleware.(type) {
-			case *nethttplibrary.UrlReplaceHandler:
-				return v
-			default:
-				// And here I'm feeling dumb. ;)
-				fmt.Printf("UrlReplaceHandler middleware not found.")
-			}
-		}
-	}
-	return nil
 }
 
 func buildRequestInfo(ctx context.Context, adapter abstractions.RequestAdapter, body BatchRequest, baseUrl *url.URL) (*abstractions.RequestInformation, error) {

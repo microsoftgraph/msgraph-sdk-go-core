@@ -3,10 +3,11 @@ package msgraphgocore
 import (
 	"context"
 	"errors"
-	abstractions "github.com/microsoft/kiota-abstractions-go"
-	"github.com/microsoft/kiota-abstractions-go/serialization"
 	"net/url"
 	"reflect"
+
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 // PageIterator represents an iterator object that can be used to get subsequent pages of a collection.
@@ -21,8 +22,9 @@ type PageIterator[T interface{}] struct {
 
 // PageResult represents a page object built from a graph response object
 type PageResult[T interface{}] struct {
-	oDataNextLink *string
-	value         []T
+	oDataNextLink  *string
+	oDataDeltaLink *string
+	value          []T
 }
 
 func (p *PageResult[T]) getValue() []T {
@@ -87,6 +89,10 @@ func (pI *PageIterator[T]) Iterate(context context.Context, callback func(pageIt
 			return nil
 		}
 
+		if pI.currentPage.getOdataNextLink() == nil || *pI.currentPage.getOdataNextLink() == "" {
+			return nil
+		}
+
 		nextPage, err := pI.next(context)
 		if err != nil {
 			return err
@@ -109,12 +115,18 @@ func (pI *PageIterator[T]) SetReqOptions(reqOptions []abstractions.RequestOption
 	pI.reqOptions = reqOptions
 }
 
+// GetOdataNextLink returns the @odata.nextLink value in the current page result.
+func (pI *PageIterator[T]) GetOdataNextLink() *string {
+	return pI.currentPage.oDataNextLink
+}
+
+// GetOdataDeltaLink returns the @odata.deltaLink value in current paged result.
+func (pI *PageIterator[T]) GetOdataDeltaLink() *string {
+	return pI.currentPage.oDataDeltaLink
+}
+
 func (pI *PageIterator[T]) next(context context.Context) (PageResult[T], error) {
 	var page PageResult[T]
-
-	if pI.currentPage.getOdataNextLink() == nil || *pI.currentPage.getOdataNextLink() == "" {
-		return page, nil
-	}
 
 	resp, err := pI.fetchNextPage(context)
 	if err != nil {
@@ -174,11 +186,11 @@ func (pI *PageIterator[T]) enumerate(callback func(item T) bool) bool {
 	for i := pI.pauseIndex; i < len(pageItems); i++ {
 		keepIterating = callback(pageItems[i])
 
+		// Set pauseIndex so that we know where to resume from.
+		// Resumes from the next item
+		pI.pauseIndex = i + 1
+
 		if !keepIterating {
-			// Callback returned false, pause! stop enumerating page items. Set pauseIndex so that we know
-			// where to resume from.
-			// Resumes from the next item
-			pI.pauseIndex = i + 1
 			break
 		}
 	}
@@ -189,6 +201,11 @@ func (pI *PageIterator[T]) enumerate(callback func(item T) bool) bool {
 // PageWithOdataNextLink represents a contract with the GetOdataNextLink() method
 type PageWithOdataNextLink interface {
 	GetOdataNextLink() *string
+}
+
+// PageWithOdataDeltaLink represents a contract with the GetOdataDeltaLink() method
+type PageWithOdataDeltaLink interface {
+	GetOdataDeltaLink() *string
 }
 
 func convertToPage[T interface{}](response interface{}) (PageResult[T], error) {
@@ -214,6 +231,11 @@ func convertToPage[T interface{}](response interface{}) (PageResult[T], error) {
 	parsablePage, ok := response.(PageWithOdataNextLink)
 	if !ok {
 		return page, errors.New("response does not have next link accessor")
+	}
+
+	deltablePage, ok := response.(PageWithOdataDeltaLink)
+	if ok {
+		page.oDataDeltaLink = deltablePage.GetOdataDeltaLink()
 	}
 
 	page.oDataNextLink = parsablePage.GetOdataNextLink()

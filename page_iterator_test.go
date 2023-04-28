@@ -33,6 +33,10 @@ func ParsableCons(pn serialization.ParseNode) (serialization.Parsable, error) {
 	return internal.NewUsersResponse(), nil
 }
 
+func ParsableDeltaCons(pn serialization.ParseNode) (serialization.Parsable, error) {
+	return internal.NewUsersDeltaResponse(), nil
+}
+
 func TestConstructorWithInvalidRequestAdapter(t *testing.T) {
 	graphResponse := internal.NewUsersResponse()
 
@@ -160,6 +164,7 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 	})
 
 	assert.Equal(t, res, []string{"0", "1", "2", "3", "4"})
+	assert.Equal(t, pageIterator.GetOdataNextLink(), response.GetOdataNextLink())
 
 	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
 		res2 = append(res2, *item.GetId())
@@ -167,6 +172,74 @@ func TestIterateCanBePausedAndResumed(t *testing.T) {
 		return true
 	})
 	assert.Equal(t, res2, []string{"10"})
+	assert.Empty(t, pageIterator.GetOdataNextLink())
+
+	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+		assert.Fail(t, "Should not re-iterate over items")
+		return true
+	})
+}
+
+func TestGetOdataNextLink(t *testing.T) {
+	testServer := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, req *nethttp.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `
+			{
+				"@odata.nextLink": "",
+				"value": [
+	        		{
+	            		"id": "10"
+	        		}
+	        	]
+        	}
+        `)
+	}))
+	defer testServer.Close()
+
+	graphResponse := buildGraphResponse()
+	mockPath := testServer.URL + "/next-page"
+	graphResponse.SetOdataNextLink(&mockPath)
+
+	pageIterator, _ := NewPageIterator[internal.User](graphResponse, reqAdapter, ParsableDeltaCons)
+	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+		return true
+	})
+
+	assert.Empty(t, pageIterator.GetOdataNextLink())
+}
+
+func TestGetOdataDeltaLink(t *testing.T) {
+	testServer := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, req *nethttp.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `
+			{
+				"@odata.nextLink": "",
+				"@odata.deltaLink": "delta-page-2",
+				"value": [
+	        		{
+	            		"id": "10"
+	        		}
+	        	]
+        	}
+        `)
+	}))
+	defer testServer.Close()
+
+	dl := "delta-page-1"
+	mockPath := testServer.URL + "/next-page"
+
+	graphResponse := &internal.UsersDeltaResponse{
+		UsersResponse: *buildGraphResponse(),
+	}
+	graphResponse.SetOdataDeltaLink(&dl)
+	graphResponse.SetOdataNextLink(&mockPath)
+
+	pageIterator, _ := NewPageIterator[internal.User](graphResponse, reqAdapter, ParsableDeltaCons)
+	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+		return true
+	})
+
+	assert.Equal(t, *pageIterator.GetOdataDeltaLink(), "delta-page-2")
 }
 
 func buildGraphResponse() *internal.UsersResponse {

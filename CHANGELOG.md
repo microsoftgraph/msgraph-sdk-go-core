@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [0.36.2] - 2023-05-01
+
+### Added
+
+- `PageIterator` exposes `odata.nextLink` and `odata.deltaLink` of most recent page.
+
 ## [0.36.1] - 2023-04-17
 
 ### Added

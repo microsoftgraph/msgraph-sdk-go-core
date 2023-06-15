@@ -8,7 +8,7 @@ require (
 	github.com/microsoft/kiota-abstractions-go v1.0.0
 	github.com/microsoft/kiota-authentication-azure-go v1.0.0
 	github.com/microsoft/kiota-http-go v1.0.0
-	github.com/microsoft/kiota-serialization-json-go v1.0.1
+	github.com/microsoft/kiota-serialization-json-go v1.0.2
 	github.com/stretchr/testify v1.8.4
 )
 

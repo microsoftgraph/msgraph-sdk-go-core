@@ -36,7 +36,7 @@ func (b *BatchRequestCollection) AddBatchRequestStep(reqInfo abstractions.Reques
 // Send serializes and sends the batch request to the server
 func (b *BatchRequestCollection) Send(ctx context.Context, adapter abstractions.RequestAdapter) (BatchResponse, error) {
 	// spit request with a max of 19
-	requestItems := ChunkSlice(b.batchRequest.requests, 19)
+	requestItems := chunkSlice(b.batchRequest.requests, 19)
 
 	if len(requestItems) > b.batchLimit {
 		return nil, errors.New("exceeded max number of batch requests")
@@ -55,4 +55,17 @@ func (b *BatchRequestCollection) Send(ctx context.Context, adapter abstractions.
 	}
 
 	return response, nil
+}
+
+func chunkSlice[T interface{}](slice []T, chunkSize int) [][]T {
+	var chunks [][]T
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+		if end > len(slice) {
+			end = len(slice)
+		}
+
+		chunks = append(chunks, slice[i:end])
+	}
+	return chunks
 }

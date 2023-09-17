@@ -76,31 +76,76 @@ func NewPageIterator[T interface{}](res interface{}, reqAdapter abstractions.Req
 //
 //	pageIterator, err := NewPageIterator(resp, reqAdapter, parsableFactory)
 //	callbackFunc := func (pageItem interface{}) bool {
-//	    fmt.Println(page item.GetDisplayName())
+//	    fmt.Println(*item.GetDisplayName())
 //	    return true
 //	}
 //	err := pageIterator.Iterate(context.Background(), callbackFunc)
 func (pI *PageIterator[T]) Iterate(context context.Context, callback func(pageItem T) bool) error {
-	for {
-		keepIterating := pI.enumerate(callback)
-
-		if !keepIterating {
-			// Callback returned false, stop iterating through pages.
-			return nil
-		}
-
-		if pI.currentPage.getOdataNextLink() == nil || *pI.currentPage.getOdataNextLink() == "" {
-			return nil
-		}
-
-		nextPage, err := pI.next(context)
+	for pI.HasNext() {
+		val, err := pI.Next(context)
 		if err != nil {
 			return err
 		}
 
+		if !callback(val) {
+			break
+		}
+	}
+
+	return nil
+}
+
+// Next returns the next item from the current page and traverses any subsquent pages. It returns an error if the are
+// no more items to enumerate or something goes wrong.
+//
+// Example
+//
+//	pageIterator, err := NewPageIterator(resp, reqAdapter, parsableFactory)
+//	for pageIterator.HasNext() {
+//		item, err := pageIterator.Next()
+//		fmt.Println(*item.GetDisplayName())
+//	}
+func (pI *PageIterator[T]) Next(context context.Context) (T, error) {
+	var val T
+
+	// return if no more values or "next" pages to iterate
+	if !pI.HasNext() {
+		return val, errors.New("no more items to enumerate")
+	}
+
+	if pI.pauseIndex >= len(pI.currentPage.getValue()) {
+		nextPage, err := pI.nextPage(context)
+		if err != nil {
+			return val, err
+		}
 		pI.currentPage = nextPage
 		pI.pauseIndex = 0 // when moving to the next page reset pauseIndex
 	}
+
+	val = pI.nextItem()
+
+	return val, nil
+}
+
+// All returns a slice containing the items from all pages. It returns an error if something goes wrong.
+//
+// Example
+//
+//	pageIterator, err := NewPageIterator(resp, reqAdapter, parsableFactory)
+//	items, err := pageIterator.All()
+//	for _, item := range items {
+//		fmt.Println(*item.GetDisplayName())
+//	}
+func (pI *PageIterator[T]) All(context context.Context) ([]T, error) {
+	var vals []T
+
+	err := pI.Iterate(context, func(pageItem T) bool {
+		vals = append(vals, pageItem)
+
+		return true
+	})
+
+	return vals, err
 }
 
 // SetHeaders provides headers for requests made to get subsequent pages
@@ -125,20 +170,10 @@ func (pI *PageIterator[T]) GetOdataDeltaLink() *string {
 	return pI.currentPage.oDataDeltaLink
 }
 
-func (pI *PageIterator[T]) next(context context.Context) (PageResult[T], error) {
-	var page PageResult[T]
-
-	resp, err := pI.fetchNextPage(context)
-	if err != nil {
-		return page, err
-	}
-
-	page, err = convertToPage[T](resp)
-	if err != nil {
-		return page, err
-	}
-
-	return page, nil
+// HasNext returns true if there are additional items to iterate.
+func (pI *PageIterator[T]) HasNext() bool {
+	return pI.pauseIndex < len(pI.currentPage.getValue()) ||
+		pI.GetOdataNextLink() != nil && *pI.GetOdataNextLink() != ""
 }
 
 func (pI *PageIterator[T]) fetchNextPage(context context.Context) (serialization.Parsable, error) {
@@ -168,34 +203,36 @@ func (pI *PageIterator[T]) fetchNextPage(context context.Context) (serialization
 	return graphResponse, nil
 }
 
-func (pI *PageIterator[T]) enumerate(callback func(item T) bool) bool {
-	keepIterating := true
+func (pI *PageIterator[T]) nextPage(context context.Context) (PageResult[T], error) {
+	var page PageResult[T]
+
+	resp, err := pI.fetchNextPage(context)
+	if err != nil {
+		return page, err
+	}
+
+	page, err = convertToPage[T](resp)
+	if err != nil {
+		return page, err
+	}
+
+	return page, nil
+}
+
+func (pI *PageIterator[T]) nextItem() T {
+	var val T
 
 	pageItems := pI.currentPage.getValue()
-	if pageItems == nil {
-		return false
-	}
 
 	// the current page has no items to enumerate
-	if pI.currentPage.getValue() == nil {
-		return false
+	if len(pageItems) == 0 || len(pageItems) <= pI.pauseIndex {
+		return val
 	}
 
-	// start/continue enumerating page items from  pauseIndex.
-	// this makes it possible to resume iteration from where we paused iteration.
-	for i := pI.pauseIndex; i < len(pageItems); i++ {
-		keepIterating = callback(pageItems[i])
+	val = pageItems[pI.pauseIndex]
+	pI.pauseIndex++
 
-		// Set pauseIndex so that we know where to resume from.
-		// Resumes from the next item
-		pI.pauseIndex = i + 1
-
-		if !keepIterating {
-			break
-		}
-	}
-
-	return keepIterating
+	return val
 }
 
 // PageWithOdataNextLink represents a contract with the GetOdataNextLink() method

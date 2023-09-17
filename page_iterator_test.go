@@ -5,6 +5,7 @@ import (
 	"fmt"
 	nethttp "net/http"
 	httptest "net/http/httptest"
+	"strconv"
 	testing "testing"
 
 	abstractions "github.com/microsoft/kiota-abstractions-go"
@@ -106,7 +107,157 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 				"@odata.nextLink": "",
 				"value": [
 	        		{
-	            		"id": "10"
+	            		"id": "5"
+	        		}
+	        	]
+        	}
+        `)
+
+	}))
+	defer testServer.Close()
+
+	for _, tc := range []struct {
+		description string
+		useNext     bool
+	}{
+		{
+			"using Next",
+			true,
+		},
+		{
+			"using Iterate",
+			false,
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			graphResponse := buildGraphResponse()
+			mockPath := testServer.URL + "/next-page"
+			graphResponse.SetOdataNextLink(&mockPath)
+
+			pageIterator, _ := NewPageIterator[internal.User](graphResponse, reqAdapter, ParsableCons)
+			res := make([]string, 0)
+
+			if tc.useNext {
+				for pageIterator.HasNext() {
+					item, err := pageIterator.Next(context.Background())
+					assert.NoError(t, err)
+					res = append(res, *item.GetId())
+				}
+			} else {
+				err := pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+					res = append(res, *item.GetId())
+					return true
+				})
+				assert.Nil(t, err)
+			}
+
+			assert.Equal(t, res, []string{"0", "1", "2", "3", "4", "5"})
+		})
+	}
+}
+
+func TestIterateCanBePausedAndResumed(t *testing.T) {
+	testServer := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, req *nethttp.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `
+			{
+				"@odata.nextLink": "",
+				"value": [
+					{
+						"id": "10"
+					}
+				]
+			}
+		`)
+
+	}))
+	defer testServer.Close()
+
+	for _, tc := range []struct {
+		description string
+		useNext     bool
+	}{
+		{
+			"using Next",
+			true,
+		},
+		{
+			"using Iterate",
+			false,
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			res := make([]string, 0)
+			res2 := make([]string, 0)
+
+			response := buildGraphResponse()
+			mockPath := testServer.URL + "/next-page"
+			response.SetOdataNextLink(&mockPath)
+
+			pageIterator, _ := NewPageIterator[internal.User](response, reqAdapter, ParsableCons)
+			if tc.useNext {
+				for pageIterator.HasNext() {
+					item, err := pageIterator.Next(context.Background())
+					assert.NoError(t, err)
+
+					res = append(res, *item.GetId())
+
+					if *item.GetId() == "4" {
+						break
+					}
+				}
+			} else {
+				pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+					res = append(res, *item.GetId())
+
+					return *item.GetId() != "4"
+				})
+			}
+
+			assert.Equal(t, res, []string{"0", "1", "2", "3", "4"})
+			assert.Equal(t, pageIterator.GetOdataNextLink(), response.GetOdataNextLink())
+
+			if tc.useNext {
+				for pageIterator.HasNext() {
+					item, err := pageIterator.Next(context.Background())
+					assert.NoError(t, err)
+
+					res2 = append(res2, *item.GetId())
+				}
+			} else {
+				pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+					res2 = append(res2, *item.GetId())
+
+					return true
+				})
+			}
+
+			assert.Equal(t, res2, []string{"10"})
+			assert.Empty(t, pageIterator.GetOdataNextLink())
+
+			if tc.useNext {
+				assert.False(t, pageIterator.HasNext())
+				_, err := pageIterator.Next(context.Background())
+				assert.Error(t, err)
+			} else {
+				pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+					assert.Fail(t, "Should not re-iterate over items")
+					return true
+				})
+			}
+		})
+	}
+}
+
+func TestAllEnumeratesAllItems(t *testing.T) {
+	testServer := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, req *nethttp.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `
+			{
+				"@odata.nextLink": "",
+				"value": [
+	        		{
+	            		"id": "5"
 	        		}
 	        	]
         	}
@@ -119,65 +270,16 @@ func TestIterateEnumeratesAllPages(t *testing.T) {
 	mockPath := testServer.URL + "/next-page"
 	graphResponse.SetOdataNextLink(&mockPath)
 
-	pageIterator, _ := NewPageIterator[internal.User](graphResponse, reqAdapter, ParsableCons)
-	res := make([]string, 0)
+	pageIterator, err := NewPageIterator[internal.User](graphResponse, reqAdapter, ParsableCons)
+	assert.NoError(t, err)
 
-	err := pageIterator.Iterate(context.Background(), func(item internal.User) bool {
-		res = append(res, *item.GetId())
-		return true
-	})
+	res, err := pageIterator.All(context.Background())
+	assert.NoError(t, err)
 
-	// Initial page has 5 items and the next page has 1 item.
-	assert.Equal(t, len(res), 6)
-	assert.Nil(t, err)
-}
-
-func TestIterateCanBePausedAndResumed(t *testing.T) {
-	res := make([]string, 0)
-	res2 := make([]string, 0)
-
-	testServer := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, req *nethttp.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `
-			{
-				"@odata.nextLink": "",
-				"value": [
-	        		{
-	            		"id": "10"
-	        		}
-	        	]
-        	}
-        `)
-
-	}))
-	defer testServer.Close()
-
-	response := buildGraphResponse()
-	mockPath := testServer.URL + "/next-page"
-	response.SetOdataNextLink(&mockPath)
-
-	pageIterator, _ := NewPageIterator[internal.User](response, reqAdapter, ParsableCons)
-	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
-		res = append(res, *item.GetId())
-
-		return *item.GetId() != "4"
-	})
-
-	assert.Equal(t, res, []string{"0", "1", "2", "3", "4"})
-	assert.Equal(t, pageIterator.GetOdataNextLink(), response.GetOdataNextLink())
-
-	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
-		res2 = append(res2, *item.GetId())
-
-		return true
-	})
-	assert.Equal(t, res2, []string{"10"})
-	assert.Empty(t, pageIterator.GetOdataNextLink())
-
-	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
-		assert.Fail(t, "Should not re-iterate over items")
-		return true
-	})
+	assert.Len(t, res, 6)
+	for i, r := range res {
+		assert.Equal(t, strconv.Itoa(i), *r.GetId())
+	}
 }
 
 func TestGetOdataNextLink(t *testing.T) {
@@ -240,6 +342,39 @@ func TestGetOdataDeltaLink(t *testing.T) {
 	})
 
 	assert.Equal(t, *pageIterator.GetOdataDeltaLink(), "delta-page-2")
+}
+
+func TestHasNext(t *testing.T) {
+	testServer := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, req *nethttp.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `
+			{
+				"@odata.nextLink": "",
+				"value": [
+	        		{
+	            		"id": "10"
+	        		}
+	        	]
+        	}
+        `)
+	}))
+	defer testServer.Close()
+
+	graphResponse := buildGraphResponse()
+	mockPath := testServer.URL + "/next-page"
+	graphResponse.SetOdataNextLink(&mockPath)
+
+	pageIterator, _ := NewPageIterator[internal.User](graphResponse, reqAdapter, ParsableDeltaCons)
+	assert.True(t, pageIterator.HasNext())
+	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+		return false
+	})
+
+	assert.True(t, pageIterator.HasNext())
+	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+		return true
+	})
+	assert.False(t, pageIterator.HasNext())
 }
 
 func buildGraphResponse() *internal.UsersResponse {

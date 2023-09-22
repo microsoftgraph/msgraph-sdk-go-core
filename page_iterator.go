@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 	"reflect"
+	"strings"
 
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
@@ -173,7 +174,7 @@ func (pI *PageIterator[T]) GetOdataDeltaLink() *string {
 // HasNext returns true if there are additional items to iterate.
 func (pI *PageIterator[T]) HasNext() bool {
 	return pI.pauseIndex < len(pI.currentPage.getValue()) ||
-		pI.GetOdataNextLink() != nil && *pI.GetOdataNextLink() != ""
+		pI.GetOdataNextLink() != nil && strings.TrimSpace(*pI.GetOdataNextLink()) != ""
 }
 
 func (pI *PageIterator[T]) fetchNextPage(context context.Context) (serialization.Parsable, error) {

@@ -3,7 +3,7 @@ module github.com/microsoftgraph/msgraph-sdk-go-core
 go 1.18
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.8.0
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.0
 	github.com/google/uuid v1.4.0
 	github.com/microsoft/kiota-abstractions-go v1.4.0
 	github.com/microsoft/kiota-authentication-azure-go v1.0.1
@@ -13,7 +13,7 @@ require (
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.0 // indirect
 	github.com/cjlapao/common-go v0.0.39 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect

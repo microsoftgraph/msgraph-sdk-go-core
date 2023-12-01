@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+## [1.0.2] - 2023-12-01
+
+### Changed
+
+- Fixed a bug where GetBatchResponseById failed to deserialize error response bodies.
+
 ## [1.0.1] - 2023-11-24
 
 ### Changed

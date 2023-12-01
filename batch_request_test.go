@@ -308,6 +308,56 @@ func TestGetResponseByIdFailedRequest(t *testing.T) {
 	assert.Equal(t, "The server returned an unexpected status code and no error factory is registered for this code: 401", err.Error())
 }
 
+func TestGetErrorResponseBodyById(t *testing.T) {
+	var jsonBlob = `{
+		"responses": [{
+			"id": "3",
+			"status": 400,
+			"headers": {
+				"Content-Type": "application/json"
+			},
+			"body": {
+				"error": {
+					"code": "ExtensionError",
+					"message": "Exception: [Status Code: BadRequest; Reason: Boom]",
+					"innerError": {
+						"request-id": "123"
+					}
+				}
+			}
+		}]
+	}`
+
+	errorMapping := abstractions.ErrorMappings{
+		"4XX": internal.CreateSampleErrorFromDiscriminatorValue,
+		"5XX": internal.CreateSampleErrorFromDiscriminatorValue,
+	}
+	err := RegisterError("Userable", errorMapping)
+	assert.NoError(t, err)
+
+	mockServer := makeMockRequest(200, jsonBlob)
+	defer mockServer.Close()
+
+	mockPath := mockServer.URL + "/$batch"
+	reqAdapter.SetBaseUrl(mockPath)
+
+	reqInfo := getRequestInfo()
+	batch := NewBatchRequest(reqAdapter)
+	_, err = batch.AddBatchRequestStep(*reqInfo)
+	require.NoError(t, err)
+
+	resp, err := batch.Send(context.Background(), reqAdapter)
+	require.NoError(t, err)
+
+	_, err = GetBatchResponseById[Userable](resp, "3", CreateUser)
+	serr := &internal.SampleError{}
+	assert.ErrorAs(t, err, &serr)
+	assert.Equal(t, "Exception: [Status Code: BadRequest; Reason: Boom]", serr.Message)
+
+	err = DeRegisterError("Userable")
+	require.NoError(t, err)
+}
+
 func TestGetResponseByIdFailedRequestWithFactory(t *testing.T) {
 	mockServer := makeMockRequest(200, getDummyJSON())
 	defer mockServer.Close()

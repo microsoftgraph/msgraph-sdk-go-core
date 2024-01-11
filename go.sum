@@ -22,8 +22,8 @@ github.com/microsoft/kiota-authentication-azure-go v1.0.1 h1:F4HH+2QQHSecQg50gVE
 github.com/microsoft/kiota-authentication-azure-go v1.0.1/go.mod h1:IbifJeoi+sULI0vjnsWYSmDu5atFo/4FZ6WCoAkPjsc=
 github.com/microsoft/kiota-http-go v1.1.1 h1:W4Olo7Z/MwNZCfkcvH/5eLhnn7koRBMMRhLEnf5MPKo=
 github.com/microsoft/kiota-http-go v1.1.1/go.mod h1:QzhhfW5xkoUuT+/ohflpHJvumWeXIxa/Xl0GmQ2M6mY=
-github.com/microsoft/kiota-serialization-json-go v1.0.4 h1:5TaISWwd2Me8clrK7SqNATo0tv9seOq59y4I5953egQ=
-github.com/microsoft/kiota-serialization-json-go v1.0.4/go.mod h1:rM4+FsAY+9AEpBsBzkFFis+b/LZLlNKKewuLwK9Q6Mg=
+github.com/microsoft/kiota-serialization-json-go v1.0.5 h1:DKLs/zcRlY+UrcmI8bCprqYeh3UKfbgbzwy/H2elrmM=
+github.com/microsoft/kiota-serialization-json-go v1.0.5/go.mod h1:SgAmhkzRPX1cjnzEWTv988IcBet7wbr4y6y014l5Y1w=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/std-uritemplate/std-uritemplate/go v0.0.47 h1:erzz/DR4sOzWr0ca2MgSTkMckpLEsDySaTZwVFQq9zw=

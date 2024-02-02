@@ -1,11 +1,13 @@
 package fileuploader
 
 import (
+	"context"
+	"errors"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
-	"math"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type LargeFileUploadTask[T interface{}] interface {
@@ -16,37 +18,78 @@ type largeFileUploadTask[T interface{}] struct {
 	uploadSession   UploadSession
 	adapter         abstractions.RequestAdapter
 	fileContent     []byte
-	maxSlice        float64
+	maxSlice        int64
 	parsableFactory serialization.ParsableFactory
+	errorMappings   abstractions.ErrorMappings
 }
 
-func NewLargeFileUploadTask[T interface{}](adapter abstractions.RequestAdapter, uploadSession UploadSession, fileContent []byte, maxSlice float64, parsableFactory serialization.ParsableFactory) LargeFileUploadTask[T] {
+func NewLargeFileUploadTask[T interface{}](adapter abstractions.RequestAdapter, uploadSession UploadSession, fileContent []byte, maxSlice int64, parsableFactory serialization.ParsableFactory, errorMappings abstractions.ErrorMappings) LargeFileUploadTask[T] {
 	return &largeFileUploadTask[T]{
 		adapter:         adapter,
 		uploadSession:   uploadSession,
 		fileContent:     fileContent,
 		maxSlice:        maxSlice,
 		parsableFactory: parsableFactory,
+		errorMappings:   errorMappings,
 	}
 }
 
-// UploadAsync TODO Update function to use go routines
-// TODO allow re-uploading slices to a maximum of 10
+// UploadAsync uploads the file in slices and returns the result of the upload
 func (l *largeFileUploadTask[T]) UploadAsync(progress ProgressCallBack) UploadResult[T] {
-	/*maxTries := 3
-	uploadTries := 0
-
-	for uploadTries <= maxTries {
-		fmt.Println(uploadTries)
-		uploadTries++
-	}*/
-
+	result := NewUploadResult[T]()
+	var wg sync.WaitGroup
 	slices := l.createUploadSlices()
 	for _, slice := range slices {
-		_, _ = slice.UploadAsync() // check if successful
-		progress(slice.RangeEnd, slice.TotalSessionLength)
+		wg.Add(1)
+		uploadSlice := slice
+		go func() {
+			defer wg.Done()
+			l.uploadAsync(progress, uploadSlice, result)
+		}()
 	}
-	panic("implement me")
+
+	wg.Wait()
+	return result
+}
+
+// Resume uploads the file in slices and returns the result of the upload
+func (l *largeFileUploadTask[T]) Resume(progress ProgressCallBack) (UploadResult[T], error) {
+	// check if next expected ranges is empty
+
+	if len(l.uploadSession.GetNextExpectedRanges()) == 0 {
+		return nil, errors.New("UploadSession does not have next expected ranges")
+	}
+	return l.UploadAsync(progress), nil
+}
+
+// Cancel cancels the upload
+func (l *largeFileUploadTask[T]) Cancel() error {
+	requestInfo := abstractions.NewRequestInformationWithMethodAndUrlTemplateAndPathParameters(abstractions.DELETE, *l.uploadSession.GetUploadUrl(), make(map[string]string))
+	err := l.adapter.SendNoContent(context.Background(), requestInfo, l.errorMappings)
+	return err
+}
+
+func (l *largeFileUploadTask[T]) uploadAsync(progress ProgressCallBack, slice uploadSlice[T], result UploadResult[T]) {
+	maxRetry := 3
+	retry := 1
+	for retry < maxRetry {
+		// store the result of the upload
+		response, err := slice.UploadAsync(l.uploadSession, l.parsableFactory) // check if successful
+		if err != nil {
+			// if not successful, try again
+			if retry >= maxRetry {
+				result.SetUploadSucceeded(false)
+			}
+
+		} else {
+			result.SetUploadSucceeded(true)
+			result.SetItemResponse(response.GetItemResponse())
+			progress(slice.RangeEnd, slice.TotalSessionLength)
+			break
+		}
+
+		retry++
+	}
 }
 
 func (l *largeFileUploadTask[T]) getRangesRemaining() []rangePair {
@@ -55,18 +98,18 @@ func (l *largeFileUploadTask[T]) getRangesRemaining() []rangePair {
 	for i, ranges := range l.uploadSession.GetNextExpectedRanges() {
 		rangeValues := strings.Split(ranges, "-")
 
-		var startRange float64
-		if s, err := strconv.ParseFloat(rangeValues[0], 64); err == nil {
+		var startRange int64
+		if s, err := strconv.ParseInt(rangeValues[0], 10, 64); err == nil {
 			startRange = s
 		}
 
-		var endRange float64
+		var endRange int64
 		if !stringIsNullOrEmpty(rangeValues[1]) {
-			if s, err := strconv.ParseFloat(rangeValues[1], 64); err == nil {
+			if s, err := strconv.ParseInt(rangeValues[1], 10, 64); err == nil {
 				endRange = s
 			}
 		} else {
-			endRange = float64(len(l.fileContent))
+			endRange = int64(len(l.fileContent))
 		}
 
 		rangePairs[i] = rangePair{
@@ -78,7 +121,7 @@ func (l *largeFileUploadTask[T]) getRangesRemaining() []rangePair {
 	return rangePairs
 }
 
-func (l largeFileUploadTask[T]) nextSliceLength(rangeBegin float64, rangeEnd float64) float64 {
+func (l *largeFileUploadTask[T]) nextSliceLength(rangeBegin int64, rangeEnd int64) int64 {
 	sizeBasedOnRange := rangeEnd - rangeBegin + 1
-	return math.Min(sizeBasedOnRange, l.maxSlice)
+	return minOf(sizeBasedOnRange, l.maxSlice)
 }

@@ -4,63 +4,89 @@ import (
 	"context"
 	"fmt"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
+
+const binaryContentType = "application/octet-steam"
 
 type uploadSlice[T interface{}] struct {
 	RequestAdapter     abstractions.RequestAdapter
 	UrlTemplate        string
-	RangeBegin         float64
-	RangeEnd           float64
-	TotalSessionLength float64
-	RangeLength        float64
+	RangeBegin         int64
+	RangeEnd           int64
+	TotalSessionLength int64
+	RangeLength        int64
 	data               []byte
 	errorMappings      abstractions.ErrorMappings
 }
 
 func (l *largeFileUploadTask[T]) createUploadSlices() []uploadSlice[T] {
-	rangesRemaining := l.getRangesRemaining()
 
-	uploadSlices := make([]uploadSlice[T], len(rangesRemaining))
+	requestRanges := l.getRangesRemaining()
+	maxSlice := l.maxSlice
+	totalSessionLength := int64(len(l.fileContent))
 
-	for i, v := range rangesRemaining {
-		uploadSlices[i] = uploadSlice[T]{
-			RequestAdapter: l.adapter,
-			UrlTemplate:    *l.uploadSession.GetUploadUrl(),
-			RangeBegin:     v.Start,
-			RangeEnd:       v.End,
+	// compute the correct upload ranges by splitting the values of ranges remaining from start to end
+	var uploadSlices []uploadSlice[T]
+	for _, v := range requestRanges {
+		start := v.Start
+		for start < int64(len(l.fileContent)) && start < v.End {
+			end := minOf(v.End, (start+maxSlice)-1, totalSessionLength-1)
+			uploadSlices = append(uploadSlices, uploadSlice[T]{
+				RequestAdapter:     l.adapter,
+				UrlTemplate:        *l.uploadSession.GetUploadUrl(),
+				RangeBegin:         start,
+				RangeEnd:           end,
+				RangeLength:        end - start,
+				TotalSessionLength: totalSessionLength,
+				errorMappings:      l.errorMappings,
+				data:               l.fileContent[start:end],
+			})
+			start = end + 1
 		}
 	}
 
 	return uploadSlices
 }
 
-func (u *uploadSlice[T]) UploadAsync() (UploadResult[T], error) {
+func minOf(vars ...int64) int64 {
+	minimum := vars[0]
+	for _, i := range vars {
+		if minimum > i {
+			minimum = i
+		}
+	}
+	return minimum
+}
+
+func (u *uploadSlice[T]) UploadAsync(uploadSession UploadSession, parsableFactory serialization.ParsableFactory) (UploadResult[T], error) {
 	res := NewUploadResult[T]()
 	requestInfo := u.createRequestInformation(u.data)
 
-	var uploadResponseHandler abstractions.ResponseHandler = func(response interface{}, errorMappings abstractions.ErrorMappings) (interface{}, error) {
-		panic("To do")
-	}
-
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, abstractions.ResponseHandlerOptionKey, uploadResponseHandler)
-
-	err := u.RequestAdapter.SendNoContent(ctx, requestInfo, u.errorMappings)
+	response, err := u.RequestAdapter.Send(context.Background(), requestInfo, parsableFactory, u.errorMappings)
 	if err != nil {
 		return nil, err
 	}
+
+	res.SetUploadSucceeded(true)
+	res.SetURI(requestInfo.UrlTemplate)
+	res.SetUploadSession(uploadSession)
+	if response != nil {
+		res.SetItemResponse(response.(T))
+	}
+
 	return res, nil
 }
 
 func (u *uploadSlice[T]) createRequestInformation(content []byte) *abstractions.RequestInformation {
 	headers := abstractions.NewRequestHeaders()
-	headers.Add("Content-Range", fmt.Sprintf("bytes %f-%f/%f", u.RangeLength, u.RangeEnd, u.TotalSessionLength))
-	headers.Add("Content-Length", fmt.Sprintf("%f", u.RangeLength))
+	headers.Add("Content-Range", fmt.Sprintf("bytes %d-%d/%d", u.RangeBegin, u.RangeEnd, u.TotalSessionLength))
+	headers.Add("Content-Length", fmt.Sprintf("%d", u.RangeLength))
 
 	requestInfo := abstractions.NewRequestInformation()
 	requestInfo.Headers = headers
 	requestInfo.UrlTemplate = u.UrlTemplate
 	requestInfo.Method = abstractions.PUT
-	requestInfo.SetStreamContent(content)
+	requestInfo.SetStreamContentAndContentType(content, binaryContentType)
 	return requestInfo
 }

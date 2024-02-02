@@ -6,16 +6,16 @@ import (
 )
 
 type rangePair struct {
-	Start float64
-	End   float64
+	Start int64
+	End   int64
 }
 
 func stringIsNullOrEmpty(s string) bool {
 	s = strings.TrimSpace(s)
 	if s == "" || len(strings.TrimSpace(s)) == 0 {
-		return false
+		return true
 	}
-	return true
+	return false
 }
 
 type UploadSession interface {
@@ -25,7 +25,7 @@ type UploadSession interface {
 	GetUploadUrl() *string
 }
 
-type ProgressCallBack func(current float64, total float64)
+type ProgressCallBack func(current int64, total int64)
 
 type UploadResult[T interface{}] interface {
 	SetItemResponse(response T)

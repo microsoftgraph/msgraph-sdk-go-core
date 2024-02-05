@@ -17,7 +17,7 @@ type uploadSlice[T interface{}] struct {
 	RangeEnd           int64
 	TotalSessionLength int64
 	RangeLength        int64
-	file               ByteStream
+	byteStream         ByteStream
 	errorMappings      abstractions.ErrorMappings
 }
 
@@ -31,7 +31,7 @@ func (l *largeFileUploadTask[T]) createUploadSlices() []uploadSlice[T] {
 	var uploadSlices []uploadSlice[T]
 	for _, v := range requestRanges {
 		start := v.Start
-		for start < totalSessionLength && start < v.End {
+		for start < totalSessionLength && start <= v.End {
 			end := minOf(v.End, (start+maxSlice)-1, totalSessionLength-1)
 			uploadSlices = append(uploadSlices, uploadSlice[T]{
 				RequestAdapter:     l.adapter,
@@ -41,7 +41,7 @@ func (l *largeFileUploadTask[T]) createUploadSlices() []uploadSlice[T] {
 				RangeLength:        end - start + 1,
 				TotalSessionLength: totalSessionLength,
 				errorMappings:      l.errorMappings,
-				file:               l.byteStream,
+				byteStream:         l.byteStream,
 			})
 			start = end + 1
 		}
@@ -108,14 +108,14 @@ func (u *uploadSlice[T]) readSection(start, end int64) ([]byte, error) {
 	length := (end - start) + 1
 
 	// Seek to the start position
-	_, err := u.file.Seek(start, io.SeekStart)
+	_, err := u.byteStream.Seek(start, io.SeekStart)
 	if err != nil {
 		return nil, err
 	}
 
 	// Read the section into a buffer
 	buffer := make([]byte, length)
-	_, err = io.ReadFull(u.file, buffer)
+	_, err = io.ReadFull(u.byteStream, buffer)
 	if err != nil {
 		return nil, err
 	}

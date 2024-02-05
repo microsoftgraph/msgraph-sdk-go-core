@@ -15,8 +15,21 @@ func (s SampleError) Serialize(writer serialization.SerializationWriter) error {
 	return nil
 }
 
-func (s SampleError) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
-	return make(map[string]func(serialization.ParseNode) error)
+func (s *SampleError) GetFieldDeserializers() map[string]func(serialization.ParseNode) error {
+	res := make(map[string]func(serialization.ParseNode) error)
+	res["error"] = func(n serialization.ParseNode) error {
+		v, err := n.GetRawValue()
+		if err != nil {
+			return err
+		}
+		if vm, ok := v.(map[string]interface{}); ok {
+			if msg, ok := vm["message"]; ok && msg != nil {
+				s.Message = *msg.(*string)
+			}
+		}
+		return nil
+	}
+	return res
 }
 
 func CreateSampleErrorFromDiscriminatorValue(parseNode serialization.ParseNode) (serialization.Parsable, error) {

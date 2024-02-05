@@ -5,6 +5,8 @@ import (
 	"errors"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
+	"io"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -14,27 +16,34 @@ type LargeFileUploadTask[T interface{}] interface {
 	UploadAsync(progress ProgressCallBack) UploadResult[T]
 }
 
+// ByteStream is an interface that represents a stream of bytes
+type ByteStream interface {
+	io.Seeker
+	io.Reader
+	Stat() (os.FileInfo, error)
+}
+
 type largeFileUploadTask[T interface{}] struct {
 	uploadSession   UploadSession
 	adapter         abstractions.RequestAdapter
-	fileContent     []byte
+	byteStream      ByteStream // *os.File by default implements ByteStream
 	maxSlice        int64
 	parsableFactory serialization.ParsableFactory
 	errorMappings   abstractions.ErrorMappings
 }
 
-func NewLargeFileUploadTask[T interface{}](adapter abstractions.RequestAdapter, uploadSession UploadSession, fileContent []byte, maxSlice int64, parsableFactory serialization.ParsableFactory, errorMappings abstractions.ErrorMappings) LargeFileUploadTask[T] {
+func NewLargeFileUploadTask[T interface{}](adapter abstractions.RequestAdapter, uploadSession UploadSession, byteStream ByteStream, maxSlice int64, parsableFactory serialization.ParsableFactory, errorMappings abstractions.ErrorMappings) LargeFileUploadTask[T] {
 	return &largeFileUploadTask[T]{
 		adapter:         adapter,
 		uploadSession:   uploadSession,
-		fileContent:     fileContent,
+		byteStream:      byteStream,
 		maxSlice:        maxSlice,
 		parsableFactory: parsableFactory,
 		errorMappings:   errorMappings,
 	}
 }
 
-// UploadAsync uploads the file in slices and returns the result of the upload
+// UploadAsync uploads the byteStream in slices and returns the result of the upload
 func (l *largeFileUploadTask[T]) UploadAsync(progress ProgressCallBack) UploadResult[T] {
 	result := NewUploadResult[T]()
 	var wg sync.WaitGroup
@@ -52,7 +61,7 @@ func (l *largeFileUploadTask[T]) UploadAsync(progress ProgressCallBack) UploadRe
 	return result
 }
 
-// Resume uploads the file in slices and returns the result of the upload
+// Resume uploads the byteStream in slices and returns the result of the upload
 func (l *largeFileUploadTask[T]) Resume(progress ProgressCallBack) (UploadResult[T], error) {
 	// check if next expected ranges is empty
 
@@ -106,10 +115,14 @@ func (l *largeFileUploadTask[T]) getRangesRemaining() []rangePair {
 		var endRange int64
 		if !stringIsNullOrEmpty(rangeValues[1]) {
 			if s, err := strconv.ParseInt(rangeValues[1], 10, 64); err == nil {
-				endRange = s
+				if endRange > l.fileSize() {
+					endRange = l.fileSize() - 1
+				} else {
+					endRange = s
+				}
 			}
 		} else {
-			endRange = int64(len(l.fileContent))
+			endRange = l.fileSize() - 1
 		}
 
 		rangePairs[i] = rangePair{
@@ -119,6 +132,12 @@ func (l *largeFileUploadTask[T]) getRangesRemaining() []rangePair {
 	}
 
 	return rangePairs
+}
+
+// returns the size of a byteStream
+func (l *largeFileUploadTask[T]) fileSize() int64 {
+	fileInfo, _ := l.byteStream.Stat()
+	return fileInfo.Size()
 }
 
 func (l *largeFileUploadTask[T]) nextSliceLength(rangeBegin int64, rangeEnd int64) int64 {

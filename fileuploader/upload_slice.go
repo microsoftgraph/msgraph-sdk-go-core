@@ -5,6 +5,7 @@ import (
 	"fmt"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
+	"io"
 )
 
 const binaryContentType = "application/octet-steam"
@@ -16,7 +17,7 @@ type uploadSlice[T interface{}] struct {
 	RangeEnd           int64
 	TotalSessionLength int64
 	RangeLength        int64
-	data               []byte
+	file               ByteStream
 	errorMappings      abstractions.ErrorMappings
 }
 
@@ -24,29 +25,49 @@ func (l *largeFileUploadTask[T]) createUploadSlices() []uploadSlice[T] {
 
 	requestRanges := l.getRangesRemaining()
 	maxSlice := l.maxSlice
-	totalSessionLength := int64(len(l.fileContent))
+	totalSessionLength := l.fileSize()
 
 	// compute the correct upload ranges by splitting the values of ranges remaining from start to end
 	var uploadSlices []uploadSlice[T]
 	for _, v := range requestRanges {
 		start := v.Start
-		for start < int64(len(l.fileContent)) && start < v.End {
+		for start < totalSessionLength && start < v.End {
 			end := minOf(v.End, (start+maxSlice)-1, totalSessionLength-1)
 			uploadSlices = append(uploadSlices, uploadSlice[T]{
 				RequestAdapter:     l.adapter,
 				UrlTemplate:        *l.uploadSession.GetUploadUrl(),
 				RangeBegin:         start,
 				RangeEnd:           end,
-				RangeLength:        end - start,
+				RangeLength:        end - start + 1,
 				TotalSessionLength: totalSessionLength,
 				errorMappings:      l.errorMappings,
-				data:               l.fileContent[start:end],
+				file:               l.byteStream,
 			})
 			start = end + 1
 		}
 	}
 
 	return uploadSlices
+}
+
+func (l *largeFileUploadTask[T]) readSection(start, end int64) ([]byte, error) {
+	// Calculate the length of the section to read
+	length := (end - start) + 1
+
+	// Seek to the start position
+	_, err := l.byteStream.Seek(start, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
+
+	// Read the section into a buffer
+	buffer := make([]byte, length)
+	_, err = io.ReadFull(l.byteStream, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return buffer, nil
 }
 
 func minOf(vars ...int64) int64 {
@@ -61,7 +82,11 @@ func minOf(vars ...int64) int64 {
 
 func (u *uploadSlice[T]) UploadAsync(uploadSession UploadSession, parsableFactory serialization.ParsableFactory) (UploadResult[T], error) {
 	res := NewUploadResult[T]()
-	requestInfo := u.createRequestInformation(u.data)
+	data, err := u.readSection(u.RangeBegin, u.RangeEnd)
+	if err != nil {
+		return nil, err
+	}
+	requestInfo := u.createRequestInformation(data)
 
 	response, err := u.RequestAdapter.Send(context.Background(), requestInfo, parsableFactory, u.errorMappings)
 	if err != nil {
@@ -76,6 +101,26 @@ func (u *uploadSlice[T]) UploadAsync(uploadSession UploadSession, parsableFactor
 	}
 
 	return res, nil
+}
+
+func (u *uploadSlice[T]) readSection(start, end int64) ([]byte, error) {
+	// Calculate the length of the section to read
+	length := (end - start) + 1
+
+	// Seek to the start position
+	_, err := u.file.Seek(start, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
+
+	// Read the section into a buffer
+	buffer := make([]byte, length)
+	_, err = io.ReadFull(u.file, buffer)
+	if err != nil {
+		return nil, err
+	}
+
+	return buffer, nil
 }
 
 func (u *uploadSlice[T]) createRequestInformation(content []byte) *abstractions.RequestInformation {

@@ -15,19 +15,7 @@ import (
 	"time"
 )
 
-func TestLargeFileUploadTask(t *testing.T) {
-	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		jsonResponse := `{
-			"@odata.context": "https://graph.microsoft.com/v1.0/$metadata#microsoft.graph.uploadSession",
-			"uploadUrl": "https://uploadUrl",
-			"expirationDateTime": "2021-08-10T00:00:00Z"
-		}`
-		w.WriteHeader(200)
-		fmt.Fprint(w, jsonResponse)
-	}))
-	defer testServer.Close()
-
+func prepareUploader(testServer *httptest.Server) LargeFileUploadTask[internal.UploadResponseble] {
 	absser.DefaultParseNodeFactoryInstance.ContentTypeAssociatedFactories["application/json"] = jsonserialization.NewJsonParseNodeFactory()
 
 	reqAdapter, _ := msgraphgocore.NewGraphRequestAdapterBase(&authentication.AnonymousAuthenticationProvider{}, msgraphgocore.GraphClientOptions{
@@ -55,20 +43,79 @@ func TestLargeFileUploadTask(t *testing.T) {
 		"5XX": internal.CreateSampleErrorFromDiscriminatorValue,
 	}
 
-	uploader := NewLargeFileUploadTask[internal.UploadResponseble](reqAdapter, uploadSession, byteStream, int64(maxSliceSize), internal.CreateUploadResponseFromDiscriminatorValue, errorMapping)
+	return NewLargeFileUploadTask[internal.UploadResponseble](reqAdapter, uploadSession, byteStream, int64(maxSliceSize), internal.CreateUploadResponseFromDiscriminatorValue, errorMapping)
+}
+
+func TestLargeFileUploadTask(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		jsonResponse := `{
+			"@odata.context": "https://graph.microsoft.com/v1.0/$metadata#microsoft.graph.uploadSession",
+			"uploadUrl": "https://uploadUrl",
+			"expirationDateTime": "2021-08-10T00:00:00Z"
+		}`
+		w.WriteHeader(200)
+		fmt.Fprint(w, jsonResponse)
+	}))
+	defer testServer.Close()
+
+	uploader := prepareUploader(testServer)
 
 	// verify that the object was created correctly
 	// verify the number of sub upload tasks
+	progressCall := 0
+	progress := func(progress int64, total int64) {
+		progressCall++
+	}
+	result := uploader.Upload(progress)
+
+	// verify that status is correct
+	assert.True(t, result.GetUploadSucceeded())
+	assert.Equal(t, 12, progressCall) // progress callback should be called for every sub upload task
+}
+
+func TestResumeLargeFileUploadTask(t *testing.T) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		jsonResponse := `{
+			"@odata.context": "https://graph.microsoft.com/v1.0/$metadata#microsoft.graph.uploadSession",
+			"uploadUrl": "https://uploadUrl",
+			"expirationDateTime": "2021-08-10T00:00:00Z"
+		}`
+		w.WriteHeader(200)
+		fmt.Fprint(w, jsonResponse)
+	}))
+	defer testServer.Close()
+
+	uploader := prepareUploader(testServer)
 
 	progressCall := 0
 	progress := func(progress int64, total int64) {
 		progressCall++
 	}
-	result := uploader.UploadAsync(progress)
+	result, err := uploader.Resume(progress)
+	assert.NoError(t, err)
 
 	// verify that status is correct
 	assert.True(t, result.GetUploadSucceeded())
 	assert.Equal(t, 12, progressCall) // progress callback should be called for every sub upload task
+
+}
+
+func TestCancelLargeFileUploadTask(t *testing.T) {
+
+	var receivedReq *http.Request
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(204)
+		receivedReq = req
+	}))
+	defer testServer.Close()
+
+	uploader := prepareUploader(testServer)
+	err := uploader.Cancel()
+	assert.NoError(t, err)
+	assert.Equal(t, "DELETE", receivedReq.Method)
 }
 
 type mockUploadSession struct {

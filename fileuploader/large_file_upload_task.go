@@ -10,10 +10,13 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type LargeFileUploadTask[T interface{}] interface {
-	UploadAsync(progress ProgressCallBack) UploadResult[T]
+	Upload(progress ProgressCallBack) UploadResult[T]
+	Resume(progress ProgressCallBack) (UploadResult[T], error)
+	Cancel() error
 }
 
 // ByteStream is an interface that represents a stream of bytes
@@ -44,7 +47,7 @@ func NewLargeFileUploadTask[T interface{}](adapter abstractions.RequestAdapter, 
 }
 
 // UploadAsync uploads the byteStream in slices and returns the result of the upload
-func (l *largeFileUploadTask[T]) UploadAsync(progress ProgressCallBack) UploadResult[T] {
+func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[T] {
 	result := NewUploadResult[T]()
 	var wg sync.WaitGroup
 	slices := l.createUploadSlices()
@@ -68,7 +71,12 @@ func (l *largeFileUploadTask[T]) Resume(progress ProgressCallBack) (UploadResult
 	if len(l.uploadSession.GetNextExpectedRanges()) == 0 {
 		return nil, errors.New("UploadSession does not have next expected ranges")
 	}
-	return l.UploadAsync(progress), nil
+
+	if l.uploadSession.GetExpirationDateTime().After(time.Now()) {
+		return nil, errors.New("UploadSession has expired")
+	}
+
+	return l.Upload(progress), nil
 }
 
 // Cancel cancels the upload
@@ -138,9 +146,4 @@ func (l *largeFileUploadTask[T]) getRangesRemaining() []rangePair {
 func (l *largeFileUploadTask[T]) fileSize() int64 {
 	fileInfo, _ := l.byteStream.Stat()
 	return fileInfo.Size()
-}
-
-func (l *largeFileUploadTask[T]) nextSliceLength(rangeBegin int64, rangeEnd int64) int64 {
-	sizeBasedOnRange := rangeEnd - rangeBegin + 1
-	return minOf(sizeBasedOnRange, l.maxSlice)
 }

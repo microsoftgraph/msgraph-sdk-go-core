@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type LargeFileUploadTask[T interface{}] interface {
+type LargeFileUploadTask[T serialization.Parsable] interface {
 	Upload(progress ProgressCallBack) UploadResult[T]
 	Resume(progress ProgressCallBack) (UploadResult[T], error)
 	Cancel() error
@@ -26,7 +26,7 @@ type ByteStream interface {
 	Stat() (os.FileInfo, error)
 }
 
-type largeFileUploadTask[T interface{}] struct {
+type largeFileUploadTask[T serialization.Parsable] struct {
 	uploadSession   UploadSession
 	adapter         abstractions.RequestAdapter
 	byteStream      ByteStream // *os.File by default implements ByteStream
@@ -35,7 +35,7 @@ type largeFileUploadTask[T interface{}] struct {
 	errorMappings   abstractions.ErrorMappings
 }
 
-func NewLargeFileUploadTask[T interface{}](adapter abstractions.RequestAdapter, uploadSession UploadSession, byteStream ByteStream, maxSlice int64, parsableFactory serialization.ParsableFactory, errorMappings abstractions.ErrorMappings) LargeFileUploadTask[T] {
+func NewLargeFileUploadTask[T serialization.Parsable](adapter abstractions.RequestAdapter, uploadSession UploadSession, byteStream ByteStream, maxSlice int64, parsableFactory serialization.ParsableFactory, errorMappings abstractions.ErrorMappings) LargeFileUploadTask[T] {
 	return &largeFileUploadTask[T]{
 		adapter:         adapter,
 		uploadSession:   uploadSession,
@@ -46,7 +46,7 @@ func NewLargeFileUploadTask[T interface{}](adapter abstractions.RequestAdapter, 
 	}
 }
 
-// UploadAsync uploads the byteStream in slices and returns the result of the upload
+// Upload uploads the byteStream in slices and returns the result of the upload
 func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[T] {
 	result := NewUploadResult[T]()
 	var wg sync.WaitGroup
@@ -66,17 +66,39 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 
 // Resume uploads the byteStream in slices and returns the result of the upload
 func (l *largeFileUploadTask[T]) Resume(progress ProgressCallBack) (UploadResult[T], error) {
-	// check if next expected ranges is empty
+	err := l.refreshUploadStatus()
+	if err != nil {
+		return nil, err
+	}
 
 	if len(l.uploadSession.GetNextExpectedRanges()) == 0 {
 		return nil, errors.New("UploadSession does not have next expected ranges")
 	}
 
-	if l.uploadSession.GetExpirationDateTime().After(time.Now()) {
+	if l.uploadSession.GetExpirationDateTime().Before(time.Now()) {
 		return nil, errors.New("UploadSession has expired")
 	}
 
 	return l.Upload(progress), nil
+}
+
+func (l *largeFileUploadTask[T]) refreshUploadStatus() error {
+	requestInfo := abstractions.NewRequestInformation()
+	requestInfo.UrlTemplate = *l.uploadSession.GetUploadUrl()
+	requestInfo.Method = abstractions.GET
+	requestInfo.Headers.TryAdd("Accept", "application/json")
+
+	result, err := l.adapter.Send(context.Background(), requestInfo, CreateUploadSessionDiscriminator, l.errorMappings)
+	if err != nil {
+		return err
+	}
+
+	sessionResponse := result.(UploadSessionResponse)
+
+	l.uploadSession.SetExpirationDateTime(sessionResponse.GetExpirationDateTime())
+	l.uploadSession.SetNextExpectedRanges(sessionResponse.GetNextExpectedRanges())
+
+	return nil
 }
 
 // Cancel cancels the upload
@@ -91,7 +113,7 @@ func (l *largeFileUploadTask[T]) uploadAsync(progress ProgressCallBack, slice up
 	retry := 1
 	for retry < maxRetry {
 		// store the result of the upload
-		response, err := slice.UploadAsync(l.uploadSession, l.parsableFactory) // check if successful
+		response, err := slice.Upload(l.parsableFactory) // check if successful
 		if err != nil {
 			// if not successful, try again
 			if retry >= maxRetry {
@@ -99,8 +121,9 @@ func (l *largeFileUploadTask[T]) uploadAsync(progress ProgressCallBack, slice up
 			}
 
 		} else {
+			result.SetUploadSession(l.uploadSession)
 			result.SetUploadSucceeded(true)
-			result.SetItemResponse(response.GetItemResponse())
+			result.SetItemResponse(response.(T))
 			progress(slice.RangeEnd, slice.TotalSessionLength)
 			break
 		}

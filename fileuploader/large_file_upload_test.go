@@ -125,6 +125,22 @@ type mockUploadSession struct {
 	ExpirationDateTime time.Time
 }
 
+func (m *mockUploadSession) SetExpirationDateTime(expirationDateTime *time.Time) {
+	m.ExpirationDateTime = *expirationDateTime
+}
+
+func (m *mockUploadSession) SetNextExpectedRanges(nextExpectedRanges []string) {
+	m.ExpectedRanges = nextExpectedRanges
+}
+
+func (m *mockUploadSession) Serialize(writer absser.SerializationWriter) error {
+	return nil
+}
+
+func (m *mockUploadSession) GetFieldDeserializers() map[string]func(absser.ParseNode) error {
+	return make(map[string]func(absser.ParseNode) error)
+}
+
 func (m *mockUploadSession) GetExpirationDateTime() *time.Time {
 	return &m.ExpirationDateTime
 }

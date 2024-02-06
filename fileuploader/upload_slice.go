@@ -10,7 +10,7 @@ import (
 
 const binaryContentType = "application/octet-steam"
 
-type uploadSlice[T interface{}] struct {
+type uploadSlice[T serialization.Parsable] struct {
 	RequestAdapter     abstractions.RequestAdapter
 	UrlTemplate        string
 	RangeBegin         int64
@@ -80,27 +80,14 @@ func minOf(vars ...int64) int64 {
 	return minimum
 }
 
-func (u *uploadSlice[T]) UploadAsync(uploadSession UploadSession, parsableFactory serialization.ParsableFactory) (UploadResult[T], error) {
-	res := NewUploadResult[T]()
+func (u *uploadSlice[T]) Upload(parsableFactory serialization.ParsableFactory) (interface{}, error) {
 	data, err := u.readSection(u.RangeBegin, u.RangeEnd)
 	if err != nil {
 		return nil, err
 	}
 	requestInfo := u.createRequestInformation(data)
 
-	response, err := u.RequestAdapter.Send(context.Background(), requestInfo, parsableFactory, u.errorMappings)
-	if err != nil {
-		return nil, err
-	}
-
-	res.SetUploadSucceeded(true)
-	res.SetURI(requestInfo.UrlTemplate)
-	res.SetUploadSession(uploadSession)
-	if response != nil {
-		res.SetItemResponse(response.(T))
-	}
-
-	return res, nil
+	return u.RequestAdapter.Send(context.Background(), requestInfo, parsableFactory, u.errorMappings)
 }
 
 func (u *uploadSlice[T]) readSection(start, end int64) ([]byte, error) {

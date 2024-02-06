@@ -12,7 +12,7 @@ type rangePair struct {
 
 func stringIsNullOrEmpty(s string) bool {
 	s = strings.TrimSpace(s)
-	if s == "" || len(strings.TrimSpace(s)) == 0 {
+	if s == "" || len(s) == 0 {
 		return true
 	}
 	return false
@@ -20,7 +20,9 @@ func stringIsNullOrEmpty(s string) bool {
 
 type UploadSession interface {
 	GetExpirationDateTime() *time.Time
+	SetExpirationDateTime(expirationDateTime *time.Time)
 	GetNextExpectedRanges() []string
+	SetNextExpectedRanges(nextExpectedRanges []string)
 	GetOdataType() *string
 	GetUploadUrl() *string
 }

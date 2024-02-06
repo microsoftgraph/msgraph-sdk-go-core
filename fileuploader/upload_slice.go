@@ -6,6 +6,7 @@ import (
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 	"io"
+	"time"
 )
 
 const binaryContentType = "application/octet-steam"
@@ -87,7 +88,10 @@ func (u *uploadSlice[T]) Upload(parsableFactory serialization.ParsableFactory) (
 	}
 	requestInfo := u.createRequestInformation(data)
 
-	return u.RequestAdapter.Send(context.Background(), requestInfo, parsableFactory, u.errorMappings)
+	// limit the upload time per slice to 5 minutes
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+	defer cancel()
+	return u.RequestAdapter.Send(ctx, requestInfo, parsableFactory, u.errorMappings)
 }
 
 func (u *uploadSlice[T]) readSection(start, end int64) ([]byte, error) {

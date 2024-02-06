@@ -51,16 +51,39 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 	result := NewUploadResult[T]()
 	var wg sync.WaitGroup
 	slices := l.createUploadSlices()
+	maxRetriesPerRequest := 3
+
+	// slices of errors
+	var responseErrors []error
+	var itemResponse interface{}
 	for _, slice := range slices {
 		wg.Add(1)
 		uploadSlice := slice
 		go func() {
 			defer wg.Done()
-			l.uploadAsync(progress, uploadSlice, result)
+			response, err := l.uploadWithRetry(uploadSlice, maxRetriesPerRequest)
+			if err != nil {
+				responseErrors = append(responseErrors, err)
+			} else {
+				progress(uploadSlice.RangeEnd, uploadSlice.TotalSessionLength)
+			}
+			if response != nil {
+				itemResponse = response
+			}
 		}()
 	}
-
 	wg.Wait()
+
+	if len(responseErrors) > 0 {
+		result.SetUploadSucceeded(false)
+		result.SetResponseErrors(responseErrors)
+	} else {
+		result.SetUploadSucceeded(true)
+		result.SetUploadSession(l.uploadSession)
+		result.SetUploadSucceeded(true)
+		result.SetItemResponse(itemResponse.(T))
+	}
+
 	return result
 }
 
@@ -108,28 +131,23 @@ func (l *largeFileUploadTask[T]) Cancel() error {
 	return err
 }
 
-func (l *largeFileUploadTask[T]) uploadAsync(progress ProgressCallBack, slice uploadSlice[T], result UploadResult[T]) {
-	maxRetry := 3
+func (l *largeFileUploadTask[T]) uploadWithRetry(slice uploadSlice[T], maxRetry int) (interface{}, error) {
 	retry := 1
+	var response interface{}
+	var err error
 	for retry < maxRetry {
 		// store the result of the upload
-		response, err := slice.Upload(l.parsableFactory) // check if successful
+		response, err = slice.Upload(l.parsableFactory) // check if successful
 		if err != nil {
-			// if not successful, try again
 			if retry >= maxRetry {
-				result.SetUploadSucceeded(false)
+				return nil, err
 			}
-
-		} else {
-			result.SetUploadSession(l.uploadSession)
-			result.SetUploadSucceeded(true)
-			result.SetItemResponse(response.(T))
-			progress(slice.RangeEnd, slice.TotalSessionLength)
-			break
+			// backoff before retrying
+			time.Sleep(time.Duration(retry) * time.Second)
 		}
-
 		retry++
 	}
+	return response, err
 }
 
 func (l *largeFileUploadTask[T]) getRangesRemaining() []rangePair {

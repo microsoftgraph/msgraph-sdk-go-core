@@ -48,15 +48,17 @@ func NewLargeFileUploadTask[T serialization.Parsable](adapter abstractions.Reque
 // Upload uploads the byteStream in slices and returns the result of the upload
 func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[T] {
 	result := NewUploadResult[T]()
-	var wg sync.WaitGroup
 	slices := l.createUploadSlices()
 	maxRetriesPerRequest := 3
 
 	// slices of errors
 	var responseErrors []error
 	var itemResponse T
+
+	var wg sync.WaitGroup
+	wg.Add(len(slices))
+
 	for _, slice := range slices {
-		wg.Add(1)
 		uploadSlice := slice
 		go func() {
 			defer wg.Done()
@@ -71,6 +73,7 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 			}
 		}()
 	}
+
 	wg.Wait()
 
 	if len(responseErrors) > 0 {

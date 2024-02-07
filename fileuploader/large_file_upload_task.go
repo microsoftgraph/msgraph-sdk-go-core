@@ -21,8 +21,7 @@ type LargeFileUploadTask[T serialization.Parsable] interface {
 
 // ByteStream is an interface that represents a stream of bytes
 type ByteStream interface {
-	io.Seeker
-	io.Reader
+	io.ReaderAt
 	Stat() (os.FileInfo, error)
 }
 
@@ -55,7 +54,7 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 
 	// slices of errors
 	var responseErrors []error
-	var itemResponse interface{}
+	var itemResponse T
 	for _, slice := range slices {
 		wg.Add(1)
 		uploadSlice := slice
@@ -68,7 +67,7 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 				progress(uploadSlice.RangeEnd, uploadSlice.TotalSessionLength)
 			}
 			if response != nil {
-				itemResponse = response
+				itemResponse = response.(T)
 			}
 		}()
 	}
@@ -80,8 +79,7 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 	} else {
 		result.SetUploadSucceeded(true)
 		result.SetUploadSession(l.uploadSession)
-		result.SetUploadSucceeded(true)
-		result.SetItemResponse(itemResponse.(T))
+		result.SetItemResponse(itemResponse)
 	}
 
 	return result

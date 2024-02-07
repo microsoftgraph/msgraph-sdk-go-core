@@ -5,7 +5,6 @@ import (
 	"fmt"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
-	"io"
 	"time"
 )
 
@@ -51,26 +50,6 @@ func (l *largeFileUploadTask[T]) createUploadSlices() []uploadSlice[T] {
 	return uploadSlices
 }
 
-func (l *largeFileUploadTask[T]) readSection(start, end int64) ([]byte, error) {
-	// Calculate the length of the section to read
-	length := (end - start) + 1
-
-	// Seek to the start position
-	_, err := l.byteStream.Seek(start, io.SeekStart)
-	if err != nil {
-		return nil, err
-	}
-
-	// Read the section into a buffer
-	buffer := make([]byte, length)
-	_, err = io.ReadFull(l.byteStream, buffer)
-	if err != nil {
-		return nil, err
-	}
-
-	return buffer, nil
-}
-
 func minOf(vars ...int64) int64 {
 	minimum := vars[0]
 	for _, i := range vars {
@@ -95,18 +74,10 @@ func (u *uploadSlice[T]) Upload(parsableFactory serialization.ParsableFactory) (
 }
 
 func (u *uploadSlice[T]) readSection(start, end int64) ([]byte, error) {
-	// Calculate the length of the section to read
 	length := (end - start) + 1
 
-	// Seek to the start position
-	_, err := u.byteStream.Seek(start, io.SeekStart)
-	if err != nil {
-		return nil, err
-	}
-
-	// Read the section into a buffer
 	buffer := make([]byte, length)
-	_, err = io.ReadFull(u.byteStream, buffer)
+	_, err := u.byteStream.ReadAt(buffer, start)
 	if err != nil {
 		return nil, err
 	}

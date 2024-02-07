@@ -77,13 +77,17 @@ func TestLargeFileUploadTask(t *testing.T) {
 func TestResumeLargeFileUploadTask(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+
+		testTime := time.Now().Add(1 * time.Hour).Format("2006-01-02T15:04:05Z")
 		jsonResponse := `{
 			"@odata.context": "https://graph.microsoft.com/v1.0/$metadata#microsoft.graph.uploadSession",
 			"uploadUrl": "https://uploadUrl",
-			"expirationDateTime": "2021-08-10T00:00:00Z"
+			"expirationDateTime": "%s",
+			"nextExpectedRanges": ["0-4", "6-"]
 		}`
 		w.WriteHeader(200)
-		fmt.Fprint(w, jsonResponse)
+		formattedResponse := fmt.Sprintf(jsonResponse, testTime)
+		fmt.Fprint(w, formattedResponse)
 	}))
 	defer testServer.Close()
 

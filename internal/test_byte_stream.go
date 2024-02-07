@@ -2,7 +2,6 @@ package internal
 
 import (
 	"github.com/microsoft/kiota-abstractions-go/serialization"
-	"io"
 	"io/fs"
 	"os"
 	"time"
@@ -10,7 +9,11 @@ import (
 
 type MockByteStream struct {
 	Content []byte
-	offset  int
+}
+
+func (m *MockByteStream) ReadAt(p []byte, off int64) (n int, err error) {
+	v := copy(p, m.Content[off:])
+	return v, nil
 }
 
 func (m *MockByteStream) Stat() (os.FileInfo, error) {
@@ -22,19 +25,6 @@ func (m *MockByteStream) Stat() (os.FileInfo, error) {
 		contents: string(m.Content),
 		err:      nil,
 	}, nil
-}
-
-func (m *MockByteStream) Read(p []byte) (n int, err error) {
-	if m.offset >= len(m.Content) {
-		return 0, io.EOF
-	}
-	v := copy(p, m.Content[m.offset:])
-	m.offset += v
-	return v, nil
-}
-
-func (m *MockByteStream) Seek(offset int64, whence int) (int64, error) {
-	return 0, nil
 }
 
 type fakeFileInfo struct {

@@ -2,6 +2,7 @@ package msgraphgocore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -150,7 +151,7 @@ func TestHandlesHTTPError(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(403)
-		fmt.Fprint(w, "")
+		fmt.Fprint(w, "{}")
 	}))
 	defer testServer.Close()
 
@@ -171,7 +172,14 @@ func TestHandlesHTTPError(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = batch.Send(context.Background(), reqAdapter)
-	assert.Equal(t, err.Error(), "content is empty")
+
+	var sampleError *internal.SampleError
+	switch {
+	case errors.As(err, &sampleError):
+		assert.Equal(t, "error status code received from the API", err.Error())
+	default:
+		assert.Fail(t, "error type is not as expected")
+	}
 
 	err = DeRegisterError(BatchRequestErrorRegistryKey)
 	require.NoError(t, err)

@@ -16,6 +16,7 @@ import (
 type LargeFileUploadTask[T serialization.Parsable] interface {
 	Upload(progress ProgressCallBack) UploadResult[T]
 	Resume(progress ProgressCallBack) (UploadResult[T], error)
+	RefreshUploadStatus() error
 	Cancel() error
 }
 
@@ -90,7 +91,7 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 
 // Resume uploads the byteStream in slices and returns the result of the upload
 func (l *largeFileUploadTask[T]) Resume(progress ProgressCallBack) (UploadResult[T], error) {
-	err := l.refreshUploadStatus()
+	err := l.RefreshUploadStatus()
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +107,7 @@ func (l *largeFileUploadTask[T]) Resume(progress ProgressCallBack) (UploadResult
 	return l.Upload(progress), nil
 }
 
-func (l *largeFileUploadTask[T]) refreshUploadStatus() error {
+func (l *largeFileUploadTask[T]) RefreshUploadStatus() error {
 	requestInfo := abstractions.NewRequestInformation()
 	requestInfo.UrlTemplate = *l.uploadSession.GetUploadUrl()
 	requestInfo.Method = abstractions.GET

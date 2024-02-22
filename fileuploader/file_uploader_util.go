@@ -34,8 +34,8 @@ type UploadResult[T interface{}] interface {
 	GetItemResponse() T
 	SetUploadSession(uploadSession UploadSession)
 	GetUploadSession() UploadSession
-	SetURI(uri string)
-	GetURI() string
+	SetURI(uri *string)
+	GetURI() *string
 	SetUploadSucceeded(isSuccessful bool)
 	GetUploadSucceeded() bool
 	SetResponseErrors(errors []error)
@@ -49,7 +49,7 @@ func NewUploadResult[T interface{}]() UploadResult[T] {
 type uploadResult[T interface{}] struct {
 	itemResponse    T
 	uploadSession   UploadSession
-	uri             string
+	uri             *string
 	uploadSucceeded bool
 	responseErrors  []error
 }
@@ -70,11 +70,11 @@ func (u *uploadResult[T]) GetUploadSession() UploadSession {
 	return u.uploadSession
 }
 
-func (u *uploadResult[T]) SetURI(uri string) {
+func (u *uploadResult[T]) SetURI(uri *string) {
 	u.uri = uri
 }
 
-func (u *uploadResult[T]) GetURI() string {
+func (u *uploadResult[T]) GetURI() *string {
 	return u.uri
 }
 

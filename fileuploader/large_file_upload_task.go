@@ -55,6 +55,7 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 	// slices of errors
 	var responseErrors []error
 	var itemResponse T
+	var location *string
 
 	var wg sync.WaitGroup
 	wg.Add(len(slices))
@@ -63,7 +64,7 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 		uploadSlice := slice
 		go func() {
 			defer wg.Done()
-			response, err := l.uploadWithRetry(uploadSlice, maxRetriesPerRequest)
+			response, uploadLocation, err := l.uploadWithRetry(uploadSlice, maxRetriesPerRequest)
 			if err != nil {
 				responseErrors = append(responseErrors, err)
 			} else {
@@ -72,6 +73,7 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 			if response != nil {
 				itemResponse = response.(T)
 			}
+			location = uploadLocation
 		}()
 	}
 
@@ -84,6 +86,7 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 		result.SetUploadSucceeded(true)
 		result.SetUploadSession(l.uploadSession)
 		result.SetItemResponse(itemResponse)
+		result.SetURI(location)
 	}
 
 	return result
@@ -133,23 +136,24 @@ func (l *largeFileUploadTask[T]) Cancel() error {
 	return err
 }
 
-func (l *largeFileUploadTask[T]) uploadWithRetry(slice uploadSlice[T], maxRetry int) (interface{}, error) {
+func (l *largeFileUploadTask[T]) uploadWithRetry(slice uploadSlice[T], maxRetry int) (interface{}, *string, error) {
 	retry := 1
-	var response interface{}
+	var parseable interface{}
+	var location *string
 	var err error
 	for retry < maxRetry {
 		// store the result of the upload
-		response, err = slice.Upload(l.parsableFactory) // check if successful
+		parseable, location, err = slice.Upload(l.parsableFactory) // check if successful
 		if err != nil {
 			if retry >= maxRetry {
-				return nil, err
+				return nil, nil, err
 			}
 			// backoff before retrying
 			time.Sleep(time.Duration(retry) * time.Second)
 		}
 		retry++
 	}
-	return response, err
+	return parseable, location, err
 }
 
 func (l *largeFileUploadTask[T]) getRangesRemaining() []rangePair {

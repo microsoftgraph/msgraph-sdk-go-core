@@ -5,6 +5,7 @@ import (
 	"fmt"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
+	nethttp "net/http"
 	"time"
 )
 
@@ -60,17 +61,39 @@ func minOf(vars ...int64) int64 {
 	return minimum
 }
 
-func (u *uploadSlice[T]) Upload(parsableFactory serialization.ParsableFactory) (interface{}, error) {
+func (u *uploadSlice[T]) Upload(parsableFactory serialization.ParsableFactory) (interface{}, *string, error) {
 	data, err := u.readSection(u.RangeBegin, u.RangeEnd)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	requestInfo := u.createRequestInformation(data)
 
 	// limit the upload time per slice to 5 minutes
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 	defer cancel()
-	return u.RequestAdapter.Send(ctx, requestInfo, parsableFactory, u.errorMappings)
+
+	var location *string
+	responseHandler := func(rawResponse interface{}, errorMappings abstractions.ErrorMappings) (interface{}, error) {
+		// cast response to *nethttp.Response
+		if rawResponse == nil {
+			return nil, nil
+		}
+		response := rawResponse.(*nethttp.Response)
+
+		// parse the response
+		u := NewUploadSerializer(response, errorMappings, parsableFactory)
+		parsable, urlLocation, err := ParseResponse(u)
+		location = urlLocation
+		return parsable, err
+	}
+
+	handlerOption := abstractions.NewRequestHandlerOption()
+	handlerOption.SetResponseHandler(responseHandler)
+
+	requestInfo.AddRequestOptions([]abstractions.RequestOption{handlerOption})
+
+	result, err := u.RequestAdapter.Send(ctx, requestInfo, parsableFactory, u.errorMappings)
+	return result, location, err
 }
 
 func (u *uploadSlice[T]) readSection(start, end int64) ([]byte, error) {

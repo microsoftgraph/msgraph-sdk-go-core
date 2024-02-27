@@ -66,6 +66,31 @@ func NewPageIterator[T interface{}](res interface{}, reqAdapter abstractions.Req
 	}, nil
 }
 
+// NewPageIteratorV2 creates an iterator instance
+//
+// It has three parameters. res is the graph response from the initial request and represents the first page.
+// reqAdapter is used for getting the next page and constructorFunc is used for serializing next page's response to the specified type.
+func NewPageIteratorV2[T serialization.Parsable](res ParseCollections[T], reqAdapter abstractions.RequestAdapter, constructorFunc ParseFactory[T]) (*PageIterator[T], error) {
+	if reqAdapter == nil {
+		return nil, errors.New("reqAdapter can't be nil")
+	}
+
+	page, err := convertToPage[T](res)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PageIterator[T]{
+		currentPage: page,
+		reqAdapter:  reqAdapter,
+		pauseIndex:  0,
+		constructorFunc: func(node serialization.ParseNode) (serialization.Parsable, error) {
+			return NewParseableCollection[T](constructorFunc), nil
+		},
+		headers: abstractions.NewRequestHeaders(),
+	}, nil
+}
+
 // Iterate traverses all pages and enumerates all items in the current page and returns an error if something goes wrong.
 //
 // Iterate receives a callback function which is called with each item in the current page as an argument. The callback function

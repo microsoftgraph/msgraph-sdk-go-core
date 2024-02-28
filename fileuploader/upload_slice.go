@@ -5,7 +5,7 @@ import (
 	"fmt"
 	abstractions "github.com/microsoft/kiota-abstractions-go"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
-	nethttp "net/http"
+	nethttplibrary "github.com/microsoft/kiota-http-go"
 	"time"
 )
 
@@ -72,27 +72,18 @@ func (u *uploadSlice[T]) Upload(parsableFactory serialization.ParsableFactory) (
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 	defer cancel()
 
-	var location *string
-	responseHandler := func(rawResponse interface{}, errorMappings abstractions.ErrorMappings) (interface{}, error) {
-		// cast response to *nethttp.Response
-		if rawResponse == nil {
-			return nil, nil
-		}
-		response := rawResponse.(*nethttp.Response)
-
-		// parse the response
-		u := NewUploadSerializer(response, errorMappings, parsableFactory)
-		parsable, urlLocation, err := ParseResponse(u)
-		location = urlLocation
-		return parsable, err
-	}
-
-	handlerOption := abstractions.NewRequestHandlerOption()
-	handlerOption.SetResponseHandler(responseHandler)
-
-	requestInfo.AddRequestOptions([]abstractions.RequestOption{handlerOption})
+	headerOptions := nethttplibrary.NewHeadersInspectionOptions()
+	headerOptions.InspectResponseHeaders = true
+	requestInfo.AddRequestOptions([]abstractions.RequestOption{headerOptions})
 
 	result, err := u.RequestAdapter.Send(ctx, requestInfo, parsableFactory, u.errorMappings)
+
+	var location *string = nil
+	locations := headerOptions.GetResponseHeaders().Get("Location")
+	if len(locations) > 0 {
+		location = &locations[0]
+	}
+
 	return result, location, err
 }
 

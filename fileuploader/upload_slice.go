@@ -11,6 +11,8 @@ import (
 
 const binaryContentType = "application/octet-steam"
 
+const uriLocationHeader = "Location"
+
 type uploadSlice[T serialization.Parsable] struct {
 	RequestAdapter     abstractions.RequestAdapter
 	UrlTemplate        string
@@ -79,7 +81,7 @@ func (u *uploadSlice[T]) Upload(parsableFactory serialization.ParsableFactory) (
 	result, err := u.RequestAdapter.Send(ctx, requestInfo, parsableFactory, u.errorMappings)
 
 	var location *string = nil
-	locations := headerOptions.GetResponseHeaders().Get("Location")
+	locations := headerOptions.GetResponseHeaders().Get(uriLocationHeader)
 	if len(locations) > 0 {
 		location = &locations[0]
 	}

@@ -5,10 +5,10 @@ go 1.18
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.10.0
 	github.com/google/uuid v1.6.0
-	github.com/microsoft/kiota-abstractions-go v1.5.6
+	github.com/microsoft/kiota-abstractions-go v1.6.0
 	github.com/microsoft/kiota-authentication-azure-go v1.0.2
 	github.com/microsoft/kiota-http-go v1.3.3
-	github.com/microsoft/kiota-serialization-json-go v1.0.6
+	github.com/microsoft/kiota-serialization-json-go v1.0.7
 	github.com/stretchr/testify v1.9.0
 )
 
@@ -19,7 +19,7 @@ require (
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/std-uritemplate/std-uritemplate/go v0.0.50 // indirect
+	github.com/std-uritemplate/std-uritemplate/go v0.0.55 // indirect
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect

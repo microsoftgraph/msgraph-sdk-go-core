@@ -177,7 +177,7 @@ func (pI *PageIterator[T]) enumerate(callback func(item T) bool) bool {
 	}
 
 	// the current page has no items to enumerate
-	if pI.currentPage.getValue() == nil {
+	if len(pI.currentPage.getValue()) == 0 {
 		return false
 	}
 

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const binaryContentType = "application/octet-steam"
+const binaryContentType = "application/octet-stream"
 
 const uriLocationHeader = "Location"
 

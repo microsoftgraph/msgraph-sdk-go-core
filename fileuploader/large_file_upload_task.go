@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -57,27 +56,18 @@ func (l *largeFileUploadTask[T]) Upload(progress ProgressCallBack) UploadResult[
 	var itemResponse T
 	var location *string
 
-	var wg sync.WaitGroup
-	wg.Add(len(slices))
-
 	for _, slice := range slices {
-		uploadSlice := slice
-		go func() {
-			defer wg.Done()
-			response, uploadLocation, err := l.uploadWithRetry(uploadSlice, maxRetriesPerRequest)
-			if err != nil {
-				responseErrors = append(responseErrors, err)
-			} else {
-				progress(uploadSlice.RangeEnd, uploadSlice.TotalSessionLength)
-			}
-			if response != nil {
-				itemResponse = response.(T)
-			}
-			location = uploadLocation
-		}()
+		response, uploadLocation, err := l.uploadWithRetry(slice, maxRetriesPerRequest)
+		if err != nil {
+			responseErrors = append(responseErrors, err)
+		} else {
+			progress(slice.RangeEnd, slice.TotalSessionLength)
+		}
+		if response != nil {
+			itemResponse = response.(T)
+		}
+		location = uploadLocation
 	}
-
-	wg.Wait()
 
 	if len(responseErrors) > 0 {
 		result.SetUploadSucceeded(false)

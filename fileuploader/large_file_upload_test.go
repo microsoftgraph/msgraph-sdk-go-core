@@ -64,8 +64,13 @@ func TestLargeFileUploadTask(t *testing.T) {
 	// verify that the object was created correctly
 	// verify the number of sub upload tasks
 	progressCall := 0
+	var previousValue int64 = 0
 	progress := func(progress int64, total int64) {
 		progressCall++
+		if previousValue > progress {
+			assert.Fail(t, "progress should not decrease")
+		}
+		previousValue = progress
 	}
 	result := uploader.Upload(progress)
 

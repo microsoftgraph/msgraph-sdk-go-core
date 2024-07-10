@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.0.2...v1.1.0) (2024-07-10)
+
+
+### Features
+
+* add git release config ([69234a2](https://github.com/microsoftgraph/msgraph-sdk-go-core/commit/69234a236c1d212941e742593ce43d2a35a1212b))
+
 ## [1.1.0] - 2024-02-02
 
 ### Added

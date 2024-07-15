@@ -2,7 +2,9 @@ package msgraphgocore
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	nethttp "net/http"
 	httptest "net/http/httptest"
 	testing "testing"
@@ -67,6 +69,49 @@ func TestConstructorWithInvalidUserGraphResponse(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestPageIteratorHandlesHTTPError(t *testing.T) {
+	errorMapping := abstractions.ErrorMappings{
+		"4XX": internal.CreateSampleErrorFromDiscriminatorValue,
+		"5XX": internal.CreateSampleErrorFromDiscriminatorValue,
+	}
+	// register errorMapper
+	err := RegisterError(PageIteratorErrorRegistryKey, errorMapping)
+	require.NoError(t, err)
+
+	testServer := httptest.NewServer(nethttp.HandlerFunc(func(w nethttp.ResponseWriter, req *nethttp.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(403)
+		fmt.Fprint(w, "{}")
+	}))
+	defer testServer.Close()
+
+	graphResponse := buildGraphResponse()
+	mockPath := testServer.URL + "/next-page"
+	graphResponse.SetOdataNextLink(&mockPath)
+
+	pageIterator, _ := NewPageIterator[internal.User](graphResponse, reqAdapter, ParsableCons)
+	headers := abstractions.NewRequestHeaders()
+	headers.Add("ConsistencyLevel", "eventual")
+	pageIterator.SetHeaders(headers)
+	res := make([]string, 0)
+
+	err = pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+		res = append(res, *item.GetDisplayName())
+		return true
+	})
+
+	var sampleError *internal.SampleError
+	switch {
+	case errors.As(err, &sampleError):
+		assert.Equal(t, "error status code received from the API", err.Error())
+	default:
+		assert.Fail(t, "error type is not as expected")
+	}
+
+	err = DeRegisterError(PageIteratorErrorRegistryKey)
+	require.NoError(t, err)
+}
+
 func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 	res := make([]string, 0)
 	graphResponse := buildGraphResponse()
@@ -90,10 +135,13 @@ func TestIterateStopsWhenCallbackReturnsFalse(t *testing.T) {
 	headers.Add("ConsistencyLevel", "eventual")
 	pageIterator.SetHeaders(headers)
 
-	pageIterator.Iterate(context.Background(), func(item internal.User) bool {
+	err := pageIterator.Iterate(context.Background(), func(item internal.User) bool {
 		res = append(res, *item.GetDisplayName())
 		return !(*item.GetId() == "2")
 	})
+	if err != nil {
+		t.Error(err)
+	}
 
 	assert.Equal(t, len(res), 3)
 }

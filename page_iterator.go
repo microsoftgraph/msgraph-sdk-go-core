@@ -10,6 +10,8 @@ import (
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
+const PageIteratorErrorRegistryKey = "PAGE_ITERATOR_ERROR_REGISTRY_KEY"
+
 // PageIterator represents an iterator object that can be used to get subsequent pages of a collection.
 type PageIterator[T interface{}] struct {
 	currentPage     PageResult[T]
@@ -18,6 +20,7 @@ type PageIterator[T interface{}] struct {
 	constructorFunc serialization.ParsableFactory
 	headers         *abstractions.RequestHeaders
 	reqOptions      []abstractions.RequestOption
+	errorMappings   abstractions.ErrorMappings
 }
 
 // PageResult represents a page object built from a graph response object
@@ -57,12 +60,15 @@ func NewPageIterator[T interface{}](res interface{}, reqAdapter abstractions.Req
 		return nil, err
 	}
 
+	errorMapping := getErrorMapper(PageIteratorErrorRegistryKey)
+
 	return &PageIterator[T]{
 		currentPage:     page,
 		reqAdapter:      reqAdapter,
 		pauseIndex:      0,
 		constructorFunc: constructorFunc,
 		headers:         abstractions.NewRequestHeaders(),
+		errorMappings:   errorMapping,
 	}, nil
 }
 
@@ -160,7 +166,7 @@ func (pI *PageIterator[T]) fetchNextPage(context context.Context) (serialization
 	requestInfo.Headers.AddAll(pI.headers)
 	requestInfo.AddRequestOptions(pI.reqOptions)
 
-	graphResponse, err = pI.reqAdapter.Send(context, requestInfo, pI.constructorFunc, nil)
+	graphResponse, err = pI.reqAdapter.Send(context, requestInfo, pI.constructorFunc, pI.errorMappings)
 	if err != nil {
 		return nil, err
 	}

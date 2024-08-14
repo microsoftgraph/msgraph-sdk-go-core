@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/microsoft/kiota-abstractions-go v1.6.1
 	github.com/microsoft/kiota-authentication-azure-go v1.1.0
-	github.com/microsoft/kiota-http-go v1.4.3
+	github.com/microsoft/kiota-http-go v1.4.4
 	github.com/microsoft/kiota-serialization-json-go v1.0.7
 	github.com/stretchr/testify v1.9.0
 )

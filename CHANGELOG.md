@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.2.0...v1.2.1) (2024-08-26)
+
+
+### Bug Fixes
+
+* repeated slice uploading on large file upload task ([cb329cc](https://github.com/microsoftgraph/msgraph-sdk-go-core/commit/cb329cc395946a619cda5501da88dcda15d84d9b))
+
 ## [1.2.0](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.1.0...v1.2.0) (2024-07-15)
 
 

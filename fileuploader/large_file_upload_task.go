@@ -3,13 +3,14 @@ package fileuploader
 import (
 	"context"
 	"errors"
-	abstractions "github.com/microsoft/kiota-abstractions-go"
-	"github.com/microsoft/kiota-abstractions-go/serialization"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	abstractions "github.com/microsoft/kiota-abstractions-go"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 type LargeFileUploadTask[T serialization.Parsable] interface {
@@ -140,6 +141,8 @@ func (l *largeFileUploadTask[T]) uploadWithRetry(slice uploadSlice[T], maxRetry 
 			}
 			// backoff before retrying
 			time.Sleep(time.Duration(retry) * time.Second)
+		} else {
+			return parseable, location, err // return the result as the upload was successful
 		}
 		retry++
 	}

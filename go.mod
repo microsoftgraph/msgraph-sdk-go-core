@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.14.0
 	github.com/google/uuid v1.6.0
-	github.com/microsoft/kiota-abstractions-go v1.6.1
+	github.com/microsoft/kiota-abstractions-go v1.7.0
 	github.com/microsoft/kiota-authentication-azure-go v1.1.0
 	github.com/microsoft/kiota-http-go v1.4.4
 	github.com/microsoft/kiota-serialization-json-go v1.0.8

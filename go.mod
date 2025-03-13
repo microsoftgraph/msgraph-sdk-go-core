@@ -1,6 +1,6 @@
 module github.com/microsoftgraph/msgraph-sdk-go-core
 
-go 1.22.0
+go 1.23.0
 
 toolchain go1.24.1
 
@@ -8,7 +8,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0
 	github.com/google/uuid v1.6.0
 	github.com/microsoft/kiota-abstractions-go v1.9.0
-	github.com/microsoft/kiota-authentication-azure-go v1.1.0
+	github.com/microsoft/kiota-authentication-azure-go v1.2.0
 	github.com/microsoft/kiota-http-go v1.5.0
 	github.com/microsoft/kiota-serialization-json-go v1.1.0
 	github.com/stretchr/testify v1.10.0
@@ -26,8 +26,8 @@ require (
 	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.2.1...v1.3.0) (2025-03-13)
+
+
+### Features
+
+* upgrades required go version from go1.18 to go 1.22 ([6a25397](https://github.com/microsoftgraph/msgraph-sdk-go-core/commit/6a25397741b5b20ea899f2a5a4389dc130205168))
+
 ## [1.2.1](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.2.0...v1.2.1) (2024-08-26)
 
 

@@ -8,7 +8,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.1
 	github.com/google/uuid v1.6.0
 	github.com/microsoft/kiota-abstractions-go v1.9.1
-	github.com/microsoft/kiota-authentication-azure-go v1.2.0
+	github.com/microsoft/kiota-authentication-azure-go v1.2.1
 	github.com/microsoft/kiota-http-go v1.5.1
 	github.com/microsoft/kiota-serialization-json-go v1.1.1
 	github.com/stretchr/testify v1.10.0

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.3.0...v1.3.1) (2025-03-24)
+
+
+### Bug Fixes
+
+* upgrades common go dependency to solve triming issues ([3d78157](https://github.com/microsoftgraph/msgraph-sdk-go-core/commit/3d781577cb8e5776058df106d45a6b8e2731a11f))
+* upgrades common go dependency to solve triming issues ([f731ccc](https://github.com/microsoftgraph/msgraph-sdk-go-core/commit/f731ccc4e96fcfbdc2885f935bae4bf95b9c2900))
+
 ## [1.3.0](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.2.1...v1.3.0) (2025-03-13)
 
 

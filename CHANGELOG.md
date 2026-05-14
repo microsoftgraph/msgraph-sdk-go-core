@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.4.0...v1.4.1) (2026-05-14)
+
+
+### Bug Fixes
+
+* **deps:** bump kiota and azcore dependencies ([#372](https://github.com/microsoftgraph/msgraph-sdk-go-core/issues/372)) ([a0ba535](https://github.com/microsoftgraph/msgraph-sdk-go-core/commit/a0ba535b08923091c1eda8d336ce6bf1a4112fc8))
+
 ## [1.4.0](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.3.2...v1.4.0) (2025-09-11)
 
 

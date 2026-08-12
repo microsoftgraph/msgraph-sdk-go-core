@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.4.1...v1.4.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* add missing image and enable Go module proxy in daily CI build ([#384](https://github.com/microsoftgraph/msgraph-sdk-go-core/issues/384)) ([b8f2840](https://github.com/microsoftgraph/msgraph-sdk-go-core/commit/b8f2840c3256d649fa1d1e9ee982823d36909934))
+
 ## [1.4.1](https://github.com/microsoftgraph/msgraph-sdk-go-core/compare/v1.4.0...v1.4.1) (2026-05-14)
 
 

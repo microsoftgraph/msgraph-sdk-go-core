@@ -277,13 +277,7 @@ func deserializeNodes(value []*jsonserialization.JsonParseNode) (interface{}, er
 
 func deserializeValue(value interface{}) (interface{}, error) {
 	switch v := value.(type) {
-	case int:
-	case float64:
-	case string:
-		return value, nil
-	case *int:
-	case *float64:
-	case *string:
+	case int, float64, string, *int, *float64, *string:
 		return value, nil
 	case jsonserialization.JsonParseNode:
 	case *jsonserialization.JsonParseNode:

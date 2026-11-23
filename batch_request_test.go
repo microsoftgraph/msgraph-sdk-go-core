@@ -237,6 +237,46 @@ func TestGetResponseByIdForSuccessfulRequest(t *testing.T) {
 	assert.Equal(t, *(user.GetUserName()), "testuser")
 }
 
+func sendDummyBatch(t *testing.T) BatchResponse {
+	mockServer := makeMockRequest(200, getDummyJSON())
+	t.Cleanup(mockServer.Close)
+
+	reqAdapter.SetBaseUrl(mockServer.URL + "/$batch")
+
+	batch := NewBatchRequest(reqAdapter)
+	_, err := batch.AddBatchRequestStep(*getRequestInfo())
+	require.NoError(t, err)
+
+	resp, err := batch.Send(context.Background(), reqAdapter)
+	require.NoError(t, err)
+	return resp
+}
+
+func TestGetBatchResponseByIdWithoutBody(t *testing.T) {
+	resp := sendDummyBatch(t)
+
+	// "4" is a 204 response and "1" a 302 response, both with a null body.
+	for _, id := range []string{"4", "1"} {
+		var user Userable
+		var err error
+		require.NotPanics(t, func() {
+			user, err = GetBatchResponseById[Userable](resp, id, CreateUser)
+		}, id)
+		assert.NoError(t, err, id)
+		assert.Nil(t, user, id)
+	}
+}
+
+func TestGetBatchResponseByIdUnknownId(t *testing.T) {
+	resp := sendDummyBatch(t)
+
+	var err error
+	require.NotPanics(t, func() {
+		_, err = GetBatchResponseById[Userable](resp, "99", CreateUser)
+	})
+	assert.EqualError(t, err, "no response found for id: 99")
+}
+
 type Userable interface {
 	serialization.Parsable
 	GetUserName() *string

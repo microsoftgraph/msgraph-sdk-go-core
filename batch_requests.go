@@ -275,6 +275,9 @@ func throwErrors(responseItem BatchItem, typeName string) error {
 func GetBatchResponseById[T serialization.Parsable](resp BatchResponse, itemId string, constructor absser.ParsableFactory) (T, error) {
 	var res T
 	item := resp.GetResponseById(itemId)
+	if item == nil {
+		return res, errors.New("no response found for id: " + itemId)
+	}
 
 	if *item.GetStatus() >= 400 {
 		return res, throwErrors(item, reflect.TypeOf(new(T)).Elem().Name())
@@ -293,7 +296,11 @@ func GetBatchResponseById[T serialization.Parsable](resp BatchResponse, itemId s
 	}
 
 	result, err := parseNode.GetObjectValue(constructor)
-	return result.(T), err
+	if err != nil || result == nil {
+		// result is nil when the item has no body, e.g. a 204 or 302 response.
+		return res, err
+	}
+	return result.(T), nil
 }
 
 func getErrorMapper(key string) abstractions.ErrorMappings {
